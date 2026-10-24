@@ -1,0 +1,13 @@
+# Flutter / Dart
+.dart_tool/
+.build/
+build/
+*.iml
+.idea/
+
+# Android local config (paths on the builder machine, never commit)
+android/local.properties
+
+# Misc
+.DS_Store
+*.log
