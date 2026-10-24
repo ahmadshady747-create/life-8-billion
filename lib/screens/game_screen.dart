@@ -306,6 +306,18 @@ class _GameScreenState extends State<GameScreen> {
                       label: Text('🌍 حدث عالمي'),
                       backgroundColor: Color(0xFFFFE0B2)),
                 ],
+                if (event.isArcChapter && event.arcName != null) ...[
+                  const SizedBox(width: 8),
+                  Chip(
+                      label: Text('📖 قصة: ${event.arcName}'),
+                      backgroundColor: Colors.purple.shade100),
+                ],
+                if (event.id.startsWith('yearly_')) ...[
+                  const SizedBox(width: 8),
+                  const Chip(
+                      label: Text('🗓️ سنة تدبير'),
+                      backgroundColor: Color(0xFFC8E6C9)),
+                ],
               ],
             ),
             const SizedBox(height: 12),

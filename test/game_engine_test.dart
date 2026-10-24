@@ -55,6 +55,27 @@ void main() {
     expect(restored.lifeScore, greaterThan(0));
   });
 
+  test('القصة المتسلسلة تفرض فصلها التالي والحدث المصيري يتبعه سنة تدبير', () {
+    final engine = GameEngine()..newLife();
+    engine.pendingNextId = 'arc_startup_2';
+    final arc = engine.pickNextEvent();
+    expect(arc.id, 'arc_startup_2');
+    expect(arc.isArcChapter, isTrue);
+
+    final engine2 = GameEngine()..newLife();
+    engine2.age = 30;
+    final first = engine2.currentEvent!;
+    final choice = first.choices.firstWhere(
+      (c) => c.deathCause == null && c.nextId == null,
+      orElse: () => first.choices.first,
+    );
+    engine2.applyChoice(choice);
+    if (!engine2.isDead) {
+      engine2.nextEvent();
+      expect(engine2.currentEvent!.id.startsWith('yearly_'), isTrue);
+    }
+  });
+
   test('عدة حيوات مختلفة على الأقل في الأسماء أو الدول', () {
     final seen = <String>{};
     for (var i = 0; i < 20; i++) {

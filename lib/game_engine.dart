@@ -1,9 +1,11 @@
 import 'dart:math';
 
+import 'data/arcs.dart';
 import 'data/countries.dart';
 import 'data/deep_events.dart';
 import 'data/events.dart';
 import 'data/world_events.dart';
+import 'data/yearly_events.dart';
 import 'models.dart';
 
 /// محرك اللعبة، النسخة العميقة.
@@ -38,6 +40,12 @@ class GameEngine {
   String? ambition;
   final Set<String> achievements = {};
   int lastWorldAge = -99;
+
+  /// سلسلة القصص: الفصل التالي المفروض، إن وجد.
+  String? pendingNextId;
+
+  /// بعد حدث مصيري، تأتي سنة تدبير قبل الحدث المصيري التالي.
+  bool yearlyTurn = false;
 
   Country get country =>
       countries.firstWhere((c) => c.name == person.country, orElse: () => countries.first);
@@ -102,21 +110,51 @@ class GameEngine {
     ambition = null;
     achievements.clear();
     lastWorldAge = -99;
+    pendingNextId = null;
+    yearlyTurn = false;
     lifespan = (68 + (stats.health - 50) ~/ 4 + _r.nextInt(36) - 15)
         .clamp(50, 102);
     currentEvent = pickNextEvent();
   }
 
-  List<LifeEvent> get _personalPool => [...allEvents, ...laterEvents, ...deepEvents];
+  List<LifeEvent> get _personalPool => [
+        ...allEvents,
+        ...laterEvents,
+        ...deepEvents,
+        ...arcStarters,
+      ];
 
   LifeEvent _findEvent(String id) {
-    for (final ev in [..._personalPool, ...worldEvents]) {
+    for (final ev in [..._personalPool, ...worldEvents, ...arcChapters]) {
       if (ev.id == id) return ev;
     }
     return genericEvent(age);
   }
 
   LifeEvent pickNextEvent() {
+    // 1. فصل قصة متسلسلة: يفرض نفسه، ولا يُختار عشوائيا.
+    // إن كان الفصل يشترط سمة لا تملكها، جرّب نسخته البديلة (_alt).
+    if (pendingNextId != null) {
+      final id = pendingNextId!;
+      pendingNextId = null;
+      var candidate = _findEvent(id);
+      final blocked = (candidate.requiresTrait != null &&
+              !traits.contains(candidate.requiresTrait)) ||
+          (candidate.forbidsTrait != null &&
+              traits.contains(candidate.forbidsTrait));
+      if (blocked) {
+        final alt = _findEvent('${id}_alt');
+        if (alt.id == '${id}_alt') candidate = alt;
+      }
+      usedEvents.add(candidate.id);
+      return candidate;
+    }
+    // 2. سنة تدبير بين الأحداث المصيرية.
+    if (yearlyTurn && age >= 6) {
+      yearlyTurn = false;
+      return yearlyEventForAge(age);
+    }
+    yearlyTurn = false;
     // حدث عالمي كل 7 سنوات على الأقل بعد سن 18، باحتمال 65%.
     if (age >= 18 && age - lastWorldAge >= 7 && _r.nextDouble() < 0.65) {
       final worldCandidates = worldEvents
@@ -144,6 +182,16 @@ class GameEngine {
   String applyChoice(EventChoice choice) {
     final event = currentEvent;
     final wasWorld = event?.isWorld ?? false;
+    // القصة المتسلسلة تستمر، وسنة التدبير لا تتكرر مرتين متتاليتين،
+    // وكل حدث مصيري آخر يتبعه سنة تدبير.
+    pendingNextId = choice.nextId;
+    if (choice.nextId != null) {
+      yearlyTurn = false;
+    } else if (event != null && event.id.startsWith('yearly_')) {
+      yearlyTurn = false;
+    } else {
+      yearlyTurn = true;
+    }
     if (event != null) {
       log.add(LogEntry(
         age: age,
@@ -299,6 +347,8 @@ class GameEngine {
         'ambition': ambition,
         'achievements': achievements.toList(),
         'lastWorldAge': lastWorldAge,
+        'pendingNextId': pendingNextId,
+        'yearlyTurn': yearlyTurn,
         'currentEventId': currentEvent?.id,
       };
 
@@ -322,9 +372,13 @@ class GameEngine {
     engine.achievements
         .addAll((j['achievements'] as List).map((e) => e as String));
     engine.lastWorldAge = (j['lastWorldAge'] as num).toInt();
+    engine.pendingNextId = j['pendingNextId'] as String?;
+    engine.yearlyTurn = j['yearlyTurn'] as bool? ?? false;
     final eventId = j['currentEventId'] as String?;
     if (eventId != null && !engine.isDead) {
-      engine.currentEvent = engine._findEvent(eventId);
+      engine.currentEvent = eventId.startsWith('yearly_')
+          ? yearlyEventForAge(engine.age)
+          : engine._findEvent(eventId);
     }
     return engine;
   }

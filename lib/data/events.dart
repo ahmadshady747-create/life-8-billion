@@ -33,6 +33,7 @@ EventChoice c(
   String? job,
   int jobSalary = 0,
   int cash = 0,
+  String? nextId,
 }) =>
     EventChoice(
       text: text,
@@ -46,6 +47,30 @@ EventChoice c(
       job: job,
       jobSalary: jobSalary,
       cash: cash,
+      nextId: nextId,
+    );
+
+/// مساعد لفصول القصص المتسلسلة.
+LifeEvent a(
+  String id,
+  String arcName,
+  String title,
+  String story,
+  List<EventChoice> choices, {
+  String? requires,
+  String? forbids,
+}) =>
+    LifeEvent(
+      id: id,
+      minAge: 0,
+      maxAge: 120,
+      title: title,
+      story: story,
+      choices: choices,
+      requiresTrait: requires,
+      forbidsTrait: forbids,
+      isArcChapter: true,
+      arcName: arcName,
     );
 
 /// مساعد للأحداث العالمية: يمرر الإقليم وحدود الاقتصاد.

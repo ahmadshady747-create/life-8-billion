@@ -143,6 +143,10 @@ class EventChoice {
   /// تغير مباشر في الرصيد النقدي (ربح استثمار، دين، شراء...).
   final int cash;
 
+  /// الفصل التالي في قصة متسلسلة، إن كان هذا الخيار يفتح واحدا.
+  /// بهذا لا ينتهي القرار عند نتيجته، بل يحدد ما سيحدث بعد سنة.
+  final String? nextId;
+
   const EventChoice({
     required this.text,
     required this.outcome,
@@ -155,6 +159,7 @@ class EventChoice {
     this.job,
     this.jobSalary = 0,
     this.cash = 0,
+    this.nextId,
   });
 }
 
@@ -176,6 +181,10 @@ class LifeEvent {
   final int? minEconomy;
   final bool isWorld;
 
+  /// فصل في قصة متسلسلة، واسم القصة لعرضه في الواجهة.
+  final bool isArcChapter;
+  final String? arcName;
+
   const LifeEvent({
     required this.id,
     required this.minAge,
@@ -189,6 +198,8 @@ class LifeEvent {
     this.maxEconomy,
     this.minEconomy,
     this.isWorld = false,
+    this.isArcChapter = false,
+    this.arcName,
   });
 
   bool fits(
