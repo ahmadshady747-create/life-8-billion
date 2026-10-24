@@ -29,6 +29,10 @@ EventChoice c(
   List<String> remove = const [],
   int jump = 2,
   String? dies,
+  String? ambition,
+  String? job,
+  int jobSalary = 0,
+  int cash = 0,
 }) =>
     EventChoice(
       text: text,
@@ -38,6 +42,39 @@ EventChoice c(
       removeTraits: remove,
       ageJump: jump,
       deathCause: dies,
+      ambition: ambition,
+      job: job,
+      jobSalary: jobSalary,
+      cash: cash,
+    );
+
+/// مساعد للأحداث العالمية: يمرر الإقليم وحدود الاقتصاد.
+LifeEvent w(
+  String id,
+  int min,
+  int max,
+  String title,
+  String story,
+  List<EventChoice> choices, {
+  String? region,
+  int? maxEconomy,
+  int? minEconomy,
+  String? requires,
+  String? forbids,
+}) =>
+    LifeEvent(
+      id: id,
+      minAge: min,
+      maxAge: max,
+      title: title,
+      story: story,
+      choices: choices,
+      requiresTrait: requires,
+      forbidsTrait: forbids,
+      region: region,
+      maxEconomy: maxEconomy,
+      minEconomy: minEconomy,
+      isWorld: true,
     );
 
 /// كل الأحداث المكتوبة. لا يتكرر حدث في الحياة الواحدة،
@@ -213,6 +250,20 @@ final allEvents = <LifeEvent>[
         c('أسافر سنة لاكتشاف العالم', 'سافرتَ بمال قليل وأحلام كثيرة، وعدتَ شخصا آخر.',
             const Effect(happiness: 14, money: -10, social: 8),
             add: ['traveler'], jump: 2),
+      ]),
+  e('ambition', 18, 22, 'ما هو طموح حياتك؟',
+      'في بداية شبابك، يسألك أحدهم سؤالا بسيطا وصعبا: ما الذي تريد أن تحققه فعلا قبل أن تنتهي حياتك؟ إجابتك ستبقى مقياسا لنجاحك في النهاية.',
+      [
+        c('أن أصبح ثريا', 'صار المال هدفك المعلن، وكل قرار بعدها يُقاس بما يجلبه.',
+            const Effect(money: 2), ambition: 'wealth', jump: 1),
+        c('أن أصبح مشهورا ومحترما', 'صارت سمعتك رأس مالك، وصرتَ تحرص على أثرك في الناس.',
+            const Effect(reputation: 8), ambition: 'fame', jump: 1),
+        c('أن أتعلم وأفهم العالم بعمق', 'صار العلم طريقك، والكتب والمعرفة رفيقيك الدائمين.',
+            const Effect(smarts: 10), ambition: 'knowledge', jump: 1),
+        c('أن أبني عائلة قوية وسعيدة', 'صارت العائلة مركز حياتك، وكل نجاح خارجها ناقص بدونها.',
+            const Effect(social: 8, happiness: 4), ambition: 'family', jump: 1),
+        c('أن أرى العالم كله', 'صار السفر حلمك، وكل مدينة جديدة صفحة في كتاب حياتك.',
+            const Effect(happiness: 8), ambition: 'travel', jump: 1),
       ]),
 ];
 

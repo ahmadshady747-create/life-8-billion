@@ -1,12 +1,15 @@
 import 'dart:math';
 
-/// إحصاءات الشخصية الخمس. كل قيمة بين 0 و 100.
+/// إحصاءات الشخصية السبع. كل قيمة بين 0 و 100.
+/// المال هنا مستوى ثروة عام، أما الرصيد النقدي الفعلي فيحفظه المحرك.
 class Stats {
   int health;
   int happiness;
   int smarts;
   int money;
   int social;
+  int skill;
+  int reputation;
 
   Stats({
     required this.health,
@@ -14,6 +17,8 @@ class Stats {
     required this.smarts,
     required this.money,
     required this.social,
+    required this.skill,
+    required this.reputation,
   });
 
   factory Stats.random(Random r, {required int money}) {
@@ -23,6 +28,8 @@ class Stats {
       smarts: 40 + r.nextInt(46),
       money: money,
       social: 45 + r.nextInt(41),
+      skill: 20 + r.nextInt(41),
+      reputation: 40 + r.nextInt(31),
     );
   }
 
@@ -32,6 +39,8 @@ class Stats {
     smarts = _clamp(smarts + e.smarts);
     money = _clamp(money + e.money);
     social = _clamp(social + e.social);
+    skill = _clamp(skill + e.skill);
+    reputation = _clamp(reputation + e.reputation);
   }
 
   static int _clamp(int v) => v < 0 ? 0 : (v > 100 ? 100 : v);
@@ -42,7 +51,29 @@ class Stats {
         ('الذكاء', '🧠', smarts),
         ('المال', '💰', money),
         ('العلاقات', '🤝', social),
+        ('المهارة', '🛠️', skill),
+        ('السمعة', '⭐', reputation),
       ];
+
+  Map<String, int> toJson() => {
+        'health': health,
+        'happiness': happiness,
+        'smarts': smarts,
+        'money': money,
+        'social': social,
+        'skill': skill,
+        'reputation': reputation,
+      };
+
+  factory Stats.fromJson(Map<String, dynamic> j) => Stats(
+        health: (j['health'] as num).toInt(),
+        happiness: (j['happiness'] as num).toInt(),
+        smarts: (j['smarts'] as num).toInt(),
+        money: (j['money'] as num).toInt(),
+        social: (j['social'] as num).toInt(),
+        skill: (j['skill'] as num?)?.toInt() ?? 30,
+        reputation: (j['reputation'] as num?)?.toInt() ?? 50,
+      );
 }
 
 /// أثر خيار واحد على الإحصاءات.
@@ -52,6 +83,8 @@ class Effect {
   final int smarts;
   final int money;
   final int social;
+  final int skill;
+  final int reputation;
 
   const Effect({
     this.health = 0,
@@ -59,10 +92,18 @@ class Effect {
     this.smarts = 0,
     this.money = 0,
     this.social = 0,
+    this.skill = 0,
+    this.reputation = 0,
   });
 
   bool get isEmpty =>
-      health == 0 && happiness == 0 && smarts == 0 && money == 0 && social == 0;
+      health == 0 &&
+      happiness == 0 &&
+      smarts == 0 &&
+      money == 0 &&
+      social == 0 &&
+      skill == 0 &&
+      reputation == 0;
 
   /// نص مختصر للتغيرات، مثل: +10 سعادة، -5 مال.
   String describe() {
@@ -76,6 +117,8 @@ class Effect {
     add(smarts, 'ذكاء');
     add(money, 'مال');
     add(social, 'علاقات');
+    add(skill, 'مهارة');
+    add(reputation, 'سمعة');
     return parts.join('، ');
   }
 }
@@ -90,6 +133,16 @@ class EventChoice {
   final int ageJump;
   final String? deathCause;
 
+  /// طموح حياة يختاره اللاعب مرة واحدة (مثل 'wealth' أو 'family').
+  final String? ambition;
+
+  /// وظيفة جديدة يبدأها هذا الخيار، مع راتب سنوي تقريبي بوحدات اللعبة.
+  final String? job;
+  final int jobSalary;
+
+  /// تغير مباشر في الرصيد النقدي (ربح استثمار، دين، شراء...).
+  final int cash;
+
   const EventChoice({
     required this.text,
     required this.outcome,
@@ -98,10 +151,17 @@ class EventChoice {
     this.removeTraits = const [],
     this.ageJump = 2,
     this.deathCause,
+    this.ambition,
+    this.job,
+    this.jobSalary = 0,
+    this.cash = 0,
   });
 }
 
 /// حدث واحد في حياة الشخص.
+/// حقول المنطقة والاقتصاد تخص الأحداث العالمية فقط: فحدث حرب إقليمية
+/// مثلا لا يناسب إلا من يعيش في ذلك الإقليم، وحدث أزمة اقتصادية يضرب
+/// أكثر من يعيش في اقتصاد هش.
 class LifeEvent {
   final String id;
   final int minAge;
@@ -111,6 +171,10 @@ class LifeEvent {
   final List<EventChoice> choices;
   final String? requiresTrait;
   final String? forbidsTrait;
+  final String? region;
+  final int? maxEconomy;
+  final int? minEconomy;
+  final bool isWorld;
 
   const LifeEvent({
     required this.id,
@@ -121,18 +185,41 @@ class LifeEvent {
     required this.choices,
     this.requiresTrait,
     this.forbidsTrait,
+    this.region,
+    this.maxEconomy,
+    this.minEconomy,
+    this.isWorld = false,
   });
 
-  bool fits(int age, Set<String> traits, Set<String> used) {
+  bool fits(
+    int age,
+    Set<String> traits,
+    Set<String> used, {
+    String? personRegion,
+    int? personEconomy,
+  }) {
     if (used.contains(id)) return false;
     if (age < minAge || age > maxAge) return false;
     if (requiresTrait != null && !traits.contains(requiresTrait)) return false;
     if (forbidsTrait != null && traits.contains(forbidsTrait)) return false;
+    if (region != null && region != personRegion) return false;
+    final maxEco = maxEconomy;
+    if (maxEco != null && personEconomy != null && personEconomy > maxEco) {
+      return false;
+    }
+    final minEco = minEconomy;
+    if (minEco != null && personEconomy != null && personEconomy < minEco) {
+      return false;
+    }
     return true;
   }
 }
 
 /// دولة للولادة العشوائية.
+/// الأرقام الأربعة الأخيرة ملف سياسات مبسّط لأغراض اللعب فقط (0-100)،
+/// وليست بيانات رسمية: اقتصاد قوي يعني رواتب أعلى وأزمات أخف،
+/// ورعاية صحية قوية تعني علاجا أرخص وأمراضا أخف، وأمان عالٍ يعني
+/// حروبا وجرائم أقل، وتعليم قوي يعني دراسة أرخص وأفضل.
 class Country {
   final String name;
   final String flag;
@@ -140,6 +227,11 @@ class Country {
   final List<String> maleNames;
   final List<String> femaleNames;
   final List<String> surnames;
+  final String region;
+  final int economy;
+  final int healthcare;
+  final int safety;
+  final int education;
 
   const Country({
     required this.name,
@@ -148,6 +240,11 @@ class Country {
     required this.maleNames,
     required this.femaleNames,
     required this.surnames,
+    required this.region,
+    required this.economy,
+    required this.healthcare,
+    required this.safety,
+    required this.education,
   });
 }
 
@@ -173,6 +270,26 @@ class Person {
 
   String get fullName => '$firstName $lastName';
   String get genderLabel => isMale ? 'ذكر' : 'أنثى';
+
+  Map<String, dynamic> toJson() => {
+        'firstName': firstName,
+        'lastName': lastName,
+        'country': country,
+        'flag': flag,
+        'isMale': isMale,
+        'birthYear': birthYear,
+        'familyClass': familyClass,
+      };
+
+  factory Person.fromJson(Map<String, dynamic> j) => Person(
+        firstName: j['firstName'] as String,
+        lastName: j['lastName'] as String,
+        country: j['country'] as String,
+        flag: j['flag'] as String,
+        isMale: j['isMale'] as bool,
+        birthYear: (j['birthYear'] as num).toInt(),
+        familyClass: j['familyClass'] as String,
+      );
 }
 
 /// سطر واحد في سجل الحياة.
@@ -188,7 +305,46 @@ class LogEntry {
     required this.choice,
     required this.outcome,
   });
+
+  Map<String, dynamic> toJson() => {
+        'age': age,
+        'title': title,
+        'choice': choice,
+        'outcome': outcome,
+      };
+
+  factory LogEntry.fromJson(Map<String, dynamic> j) => LogEntry(
+        age: (j['age'] as num).toInt(),
+        title: j['title'] as String,
+        choice: j['choice'] as String,
+        outcome: j['outcome'] as String,
+      );
 }
+
+/// طموحات الحياة التي يختار منها اللاعب واحدا في شبابه.
+const ambitionLabels = {
+  'wealth': 'طموح الثروة',
+  'fame': 'طموح الشهرة',
+  'knowledge': 'طموح العلم',
+  'family': 'طموح العائلة',
+  'travel': 'طموح السفر',
+};
+
+/// الإنجازات القابلة للفتح خلال الحياة.
+const achievementLabels = {
+  'age50': '🏅 عاش 50 سنة',
+  'age80': '🏆 عاش 80 سنة',
+  'graduate': '🎓 تخرّج من الجامعة',
+  'married': '💍 تزوّج',
+  'parent': '👶 أنجب طفلا',
+  'grandparent': '👴 صار جدّا',
+  'business': '🏢 أسس عمله الخاص',
+  'rich': '💰 بلغ ثروة 90 أو أكثر',
+  'traveler': '✈️ سافر وعاش المغامرة',
+  'healthy': '💪 حافظ على صحة 90 أو أكثر',
+  'famous': '⭐ بلغ سمعة 90 أو أكثر',
+  'survivor': '🛡️ نجا من أزمة عالمية',
+};
 
 String stageLabel(int age) {
   if (age < 6) return 'طفولة مبكرة';

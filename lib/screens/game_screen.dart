@@ -5,16 +5,29 @@ import '../models.dart';
 import '../widgets/stat_bar.dart';
 
 /// شاشة اللعب: بطاقة الشخصية، الإحصاءات، الحدث الحالي، ونتيجته.
+String formatMoney(int v) {
+  final negative = v < 0;
+  final digits = v.abs().toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buf.write(',');
+    buf.write(digits[i]);
+  }
+  return '${negative ? '-' : ''}${buf.toString()}';
+}
+
 class GameScreen extends StatefulWidget {
   final GameEngine engine;
   final VoidCallback onNewLife;
   final VoidCallback onFinish;
+  final VoidCallback? onProgress;
 
   const GameScreen({
     super.key,
     required this.engine,
     required this.onNewLife,
     required this.onFinish,
+    this.onProgress,
   });
 
   @override
@@ -32,6 +45,7 @@ class _GameScreenState extends State<GameScreen> {
       _e.applyChoice(choice);
       _showOutcome = true;
     });
+    widget.onProgress?.call();
   }
 
   void _continue() {
@@ -43,6 +57,7 @@ class _GameScreenState extends State<GameScreen> {
       _e.nextEvent();
       _showOutcome = false;
     });
+    widget.onProgress?.call();
   }
 
   Future<void> _confirmRestart() async {
@@ -186,6 +201,10 @@ class _GameScreenState extends State<GameScreen> {
                       '${person.flag} ${person.country} • ${person.genderLabel} • عمر ${_e.age} سنة • ${stageLabel(_e.age)}'),
                   Text(
                       'سنة ${_e.person.birthYear + _e.age} • ${person.familyClass}'),
+                  Text(
+                      '💰 الرصيد: ${formatMoney(_e.balance)}${_e.jobTitle != null ? ' • 💼 ${_e.jobTitle}' : ''}${_e.childrenCount > 0 ? ' • 👶 ${_e.childrenCount} ${_e.childrenCount == 1 ? 'طفل' : 'أطفال'}' : ''}'),
+                  if (_e.ambition != null)
+                    Text('🎯 ${ambitionLabels[_e.ambition]}'),
                 ],
               ),
             ),
@@ -215,6 +234,18 @@ class _GameScreenState extends State<GameScreen> {
                 runSpacing: 6,
                 children: traits
                     .map((label) => Chip(label: Text(label)))
+                    .toList(),
+              ),
+            ],
+            if (_e.achievements.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _e.achievements
+                    .map((a) => Chip(
+                        label: Text(achievementLabels[a] ?? a),
+                        backgroundColor: Colors.amber.shade100))
                     .toList(),
               ),
             ],
@@ -269,6 +300,12 @@ class _GameScreenState extends State<GameScreen> {
                 Chip(label: Text('عمر ${_e.age}')),
                 const SizedBox(width: 8),
                 Chip(label: Text(stageLabel(_e.age))),
+                if (event.isWorld) ...[
+                  const SizedBox(width: 8),
+                  const Chip(
+                      label: Text('🌍 حدث عالمي'),
+                      backgroundColor: Color(0xFFFFE0B2)),
+                ],
               ],
             ),
             const SizedBox(height: 12),
@@ -318,6 +355,12 @@ class _GameScreenState extends State<GameScreen> {
             if (!choice.effect.isEmpty) ...[
               const SizedBox(height: 12),
               Text('التأثير: ${choice.effect.describe()}',
+                  style: TextStyle(color: Colors.grey.shade700)),
+            ],
+            if (choice.cash != 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                  'الرصيد ${choice.cash > 0 ? '+' : ''}${formatMoney(choice.cash)} • رصيدك الآن: ${formatMoney(_e.balance)}',
                   style: TextStyle(color: Colors.grey.shade700)),
             ],
             const SizedBox(height: 16),

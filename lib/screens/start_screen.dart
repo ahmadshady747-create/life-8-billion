@@ -3,11 +3,17 @@ import 'package:flutter/material.dart';
 /// شاشة البداية: شرح الفكرة وزر بدء حياة عشوائية.
 class StartScreen extends StatelessWidget {
   final VoidCallback onStart;
+  final VoidCallback? onContinue;
+  final String? savedName;
+  final int? savedAge;
   final int livesPlayed;
 
   const StartScreen({
     super.key,
     required this.onStart,
+    this.onContinue,
+    this.savedName,
+    this.savedAge,
     required this.livesPlayed,
   });
 
@@ -48,12 +54,30 @@ class StartScreen extends StatelessWidget {
                       icon: '🧭',
                       text: 'قرارات عمرية: مدرسة، حب، عمل، زواج، أطفال، تقاعد، وإرث'),
                   const _Point(
+                      icon: '💼',
+                      text: 'أنظمة عميقة: مهنة وراتب وادخار واستثمار، وطموح حياة يُقاس في النهاية، وإنجازات'),
+                  const _Point(
+                      icon: '🌍',
+                      text: 'عالم حي: أزمات اقتصادية، أوبئة، حروب، ثورات تقنية وسياسات دول تؤثر عليك وأنت تعيش'),
+                  const _Point(
                       icon: '📖',
                       text: 'سجل حياة كامل: كل قرار ونتيجته يُكتب في قصتك'),
                   const _Point(
                       icon: '🕯️',
                       text: 'نهاية حتمية: كل حياة تنتهي، والسؤال هو: كيف عشتها؟'),
                   const SizedBox(height: 32),
+                  if (onContinue != null && savedName != null) ...[
+                    FilledButton(
+                      onPressed: onContinue,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        textStyle: const TextStyle(
+                            fontSize: 19, fontWeight: FontWeight.bold),
+                      ),
+                      child: Text('واصل حياة $savedName (عمر ${savedAge ?? 0}) ▶️'),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   FilledButton(
                     onPressed: onStart,
                     style: FilledButton.styleFrom(

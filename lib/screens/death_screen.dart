@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../game_engine.dart';
 import '../models.dart';
 import '../widgets/stat_bar.dart';
+import 'game_screen.dart' show formatMoney;
 
 /// شاشة النهاية: ملخص الحياة، إحصاءاتها الأخيرة، وقصتها الكاملة للنسخ.
 class DeathScreen extends StatelessWidget {
@@ -70,6 +71,36 @@ class DeathScreen extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text('عدد القرارات: ${engine.log.length}',
                               style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 6),
+                          Text('🏆 نقاط الحياة: ${engine.lifeScore}',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          Text('💰 الرصيد النهائي: ${formatMoney(engine.balance)}',
+                              style: const TextStyle(fontSize: 16)),
+                          if (engine.childrenCount > 0) ...[
+                            const SizedBox(height: 6),
+                            Text('👶 عدد الأطفال: ${engine.childrenCount}',
+                                style: const TextStyle(fontSize: 16)),
+                          ],
+                          if (engine.ambition != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                                '🎯 ${ambitionLabels[engine.ambition]}: ${engine.ambitionAchieved ? 'تحقق ✓' : 'لم يتحقق'}',
+                                style: const TextStyle(fontSize: 16)),
+                          ],
+                          if (engine.achievements.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: engine.achievements
+                                  .map((a) => Chip(
+                                      label: Text(achievementLabels[a] ?? a),
+                                      backgroundColor: Colors.amber.shade100))
+                                  .toList(),
+                            ),
+                          ],
                           if (traits.isNotEmpty) ...[
                             const SizedBox(height: 10),
                             Wrap(

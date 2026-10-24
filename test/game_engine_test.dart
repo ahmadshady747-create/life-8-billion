@@ -36,6 +36,25 @@ void main() {
     expect(ids.length, ids.toSet().length);
   });
 
+  test('الحفظ والاستئناف يعيدان نفس الحياة', () {
+    final engine = GameEngine()..newLife();
+    final event = engine.currentEvent!;
+    final choice = event.choices.firstWhere(
+      (c) => c.deathCause == null,
+      orElse: () => event.choices.first,
+    );
+    engine.applyChoice(choice);
+    engine.nextEvent();
+    final json = engine.toJson();
+    final restored = GameEngine.fromJson(json);
+    expect(restored.person.fullName, engine.person.fullName);
+    expect(restored.age, engine.age);
+    expect(restored.balance, engine.balance);
+    expect(restored.log.length, engine.log.length);
+    expect(restored.currentEvent, isNotNull);
+    expect(restored.lifeScore, greaterThan(0));
+  });
+
   test('عدة حيوات مختلفة على الأقل في الأسماء أو الدول', () {
     final seen = <String>{};
     for (var i = 0; i < 20; i++) {
