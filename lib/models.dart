@@ -147,6 +147,11 @@ class EventChoice {
   /// بهذا لا ينتهي القرار عند نتيجته، بل يحدد ما سيحدث بعد سنة.
   final String? nextId;
 
+  /// تغيّر في علاقة مع شخصية (معرّفها في خريطة علاقات المحرك)،
+  /// مثل 'friend' بزيادة أو نقصان. يُطبَّق مع باقي آثار الخيار.
+  final String? relId;
+  final int relDelta;
+
   const EventChoice({
     required this.text,
     required this.outcome,
@@ -160,6 +165,8 @@ class EventChoice {
     this.jobSalary = 0,
     this.cash = 0,
     this.nextId,
+    this.relId,
+    this.relDelta = 0,
   });
 }
 
@@ -300,6 +307,52 @@ class Person {
         isMale: j['isMale'] as bool,
         birthYear: (j['birthYear'] as num).toInt(),
         familyClass: j['familyClass'] as String,
+      );
+}
+
+/// شخصية في حياة اللاعب بدرجة علاقة تتغير بالقرارات.
+/// الدرجة بين -100 (عداوة) و+100 (ولاء عميق)، وتبدأ حول الصفر.
+class Relationship {
+  final String id;
+  final String name;
+  final String role;
+  final String icon;
+  int score;
+
+  Relationship({
+    required this.id,
+    required this.name,
+    required this.role,
+    required this.icon,
+    this.score = 0,
+  });
+
+  String get label {
+    if (score <= -60) return 'عدو لدود';
+    if (score <= -20) return 'علاقة متوترة';
+    if (score < 20) return 'معرفة عابرة';
+    if (score < 60) return 'صديق جيد';
+    return 'رفيق عمر';
+  }
+
+  void change(int delta) {
+    score = (score + delta).clamp(-100, 100);
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'role': role,
+        'icon': icon,
+        'score': score,
+      };
+
+  factory Relationship.fromJson(Map<String, dynamic> j) => Relationship(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        role: j['role'] as String,
+        icon: j['icon'] as String,
+        score: (j['score'] as num).toInt(),
       );
 }
 

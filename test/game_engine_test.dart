@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_8_billion/data/relationships.dart';
 import 'package:life_8_billion/game_engine.dart';
 
 void main() {
@@ -74,6 +75,33 @@ void main() {
       engine2.nextEvent();
       expect(engine2.currentEvent!.id.startsWith('yearly_'), isTrue);
     }
+  });
+
+  test('ذاكرة الشخصيات: علاقات تُولد وتتغير بالقرارات وتُحفظ', () {
+    final engine = GameEngine()..newLife();
+    expect(engine.relationships.length, 3);
+    expect(engine.relationships['friend']!.role, 'صديق الطفولة');
+
+    engine.relationships['friend']!.change(200);
+    expect(engine.relationships['friend']!.score, 100);
+    engine.relationships['friend']!.change(-300);
+    expect(engine.relationships['friend']!.score, -100);
+
+    // خيار يغيّر العلاقة عبر المحرك.
+    final engine2 = GameEngine()..newLife();
+    final before = engine2.relationships['friend']!.score;
+    engine2.currentEvent = relationshipEvents
+        .firstWhere((e) => e.id == 'rel_friend_trouble');
+    engine2.applyChoice(engine2.currentEvent!.choices.first);
+    expect(engine2.relationships['friend']!.score, before + 35);
+    expect(engine2.pendingNextId, 'rel_friend_returns');
+
+    final json = engine2.toJson();
+    final restored = GameEngine.fromJson(json);
+    expect(restored.relationships['friend']!.score,
+        engine2.relationships['friend']!.score);
+    expect(restored.relationships['friend']!.name,
+        engine2.relationships['friend']!.name);
   });
 
   test('عدة حيوات مختلفة على الأقل في الأسماء أو الدول', () {

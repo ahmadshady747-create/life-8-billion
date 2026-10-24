@@ -4,6 +4,7 @@ import 'data/arcs.dart';
 import 'data/countries.dart';
 import 'data/deep_events.dart';
 import 'data/events.dart';
+import 'data/relationships.dart';
 import 'data/world_events.dart';
 import 'data/yearly_events.dart';
 import 'models.dart';
@@ -40,6 +41,9 @@ class GameEngine {
   String? ambition;
   final Set<String> achievements = {};
   int lastWorldAge = -99;
+
+  /// شخصيات بذاكرة: درجة علاقة تتغير بالقرارات وتظهر في الواجهة.
+  final Map<String, Relationship> relationships = {};
 
   /// سلسلة القصص: الفصل التالي المفروض، إن وجد.
   String? pendingNextId;
@@ -99,6 +103,31 @@ class GameEngine {
     traits.clear();
     usedEvents.clear();
     log.clear();
+    relationships.clear();
+    relationships['friend'] = Relationship(
+      id: 'friend',
+      name:
+          '${country.maleNames[_r.nextInt(country.maleNames.length)]} ${country.surnames[_r.nextInt(country.surnames.length)]}',
+      role: 'صديق الطفولة',
+      icon: '👦',
+      score: 20,
+    );
+    relationships['mentor'] = Relationship(
+      id: 'mentor',
+      name:
+          '${country.maleNames[_r.nextInt(country.maleNames.length)]} ${country.surnames[_r.nextInt(country.surnames.length)]}',
+      role: 'معلم قديم',
+      icon: '🧑‍🏫',
+      score: 10,
+    );
+    relationships['rival'] = Relationship(
+      id: 'rival',
+      name:
+          '${country.maleNames[_r.nextInt(country.maleNames.length)]} ${country.surnames[_r.nextInt(country.surnames.length)]}',
+      role: 'منافس',
+      icon: '😤',
+      score: -10,
+    );
     currentEvent = null;
     lastChoice = null;
     isDead = false;
@@ -121,6 +150,7 @@ class GameEngine {
         ...allEvents,
         ...laterEvents,
         ...deepEvents,
+        ...relationshipEvents,
         ...arcStarters,
       ];
 
@@ -202,6 +232,9 @@ class GameEngine {
     }
     final hadParent = traits.contains('parent');
     stats.apply(choice.effect);
+    if (choice.relId != null) {
+      relationships[choice.relId]?.change(choice.relDelta);
+    }
     traits.addAll(choice.addTraits);
     traits.removeAll(choice.removeTraits);
     if (choice.addTraits.contains('parent')) {
@@ -349,6 +382,7 @@ class GameEngine {
         'lastWorldAge': lastWorldAge,
         'pendingNextId': pendingNextId,
         'yearlyTurn': yearlyTurn,
+        'relationships': relationships.values.map((r) => r.toJson()).toList(),
         'currentEventId': currentEvent?.id,
       };
 
@@ -374,6 +408,13 @@ class GameEngine {
     engine.lastWorldAge = (j['lastWorldAge'] as num).toInt();
     engine.pendingNextId = j['pendingNextId'] as String?;
     engine.yearlyTurn = j['yearlyTurn'] as bool? ?? false;
+    final rels = j['relationships'] as List?;
+    if (rels != null) {
+      for (final r in rels) {
+        final rel = Relationship.fromJson(Map<String, dynamic>.from(r as Map));
+        engine.relationships[rel.id] = rel;
+      }
+    }
     final eventId = j['currentEventId'] as String?;
     if (eventId != null && !engine.isDead) {
       engine.currentEvent = eventId.startsWith('yearly_')

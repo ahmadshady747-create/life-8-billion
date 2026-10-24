@@ -157,6 +157,8 @@ class _GameScreenState extends State<GameScreen> {
                   const SizedBox(height: 12),
                   _statsCard(),
                   const SizedBox(height: 12),
+                  if (_e.relationships.isNotEmpty) _relationshipsCard(),
+                  if (_e.relationships.isNotEmpty) const SizedBox(height: 12),
                   if (_showBirth)
                     _birthCard()
                   else if (_showOutcome)
@@ -248,6 +250,52 @@ class _GameScreenState extends State<GameScreen> {
                         backgroundColor: Colors.amber.shade100))
                     .toList(),
               ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _relationshipsCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('🤝 علاقاتك',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('قراراتك تغيّر هذه العلاقات، وهي تغيّر ما سيحدث لك لاحقا.',
+                style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 12),
+            for (final rel in _e.relationships.values) ...[
+              Row(
+                children: [
+                  Text(rel.icon, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('${rel.name} • ${rel.role}',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  Text('${rel.label} (${rel.score})',
+                      style: TextStyle(color: Colors.grey.shade700)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: (rel.score + 100) / 200,
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.shade200,
+                  color: rel.score >= 20
+                      ? Colors.teal
+                      : (rel.score <= -20 ? Colors.red : Colors.amber),
+                ),
+              ),
+              const SizedBox(height: 10),
             ],
           ],
         ),
