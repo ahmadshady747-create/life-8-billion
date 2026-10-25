@@ -65,8 +65,17 @@ void main() {
     expect(arc.isArcChapter, isTrue);
 
     final engine2 = GameEngine()..newLife();
+    // اعبر الافتتاح أولا (فصلان بلا سنة تدبير بينهما)، ثم اختبر
+    // حدثا مصيريا عاديا عند عمر 30.
+    engine2.applyChoice(engine2.currentEvent!.choices.first);
+    engine2.nextEvent();
+    engine2.applyChoice(engine2.currentEvent!.choices.first);
+    engine2.nextEvent();
     engine2.age = 30;
-    final first = engine2.currentEvent!;
+    engine2.yearlyTurn = false;
+    engine2.pendingNextId = null;
+    final first = engine2.pickNextEvent();
+    engine2.currentEvent = first;
     final choice = first.choices.firstWhere(
       (c) => c.deathCause == null && c.nextId == null,
       orElse: () => first.choices.first,
@@ -171,6 +180,28 @@ void main() {
     expect(restored.worldTech, 'عصر فضاء');
     expect(restored.lastWorldShiftAge, 30);
     expect(restored.worldHeadlineText, contains('عصر فضاء'));
+  });
+
+  test('الافتتاح: أول حدث هو الزقاق بثلاثة خيارات تفرض الفصل الثاني', () {
+    final engine = GameEngine()..newLife();
+    expect(engine.currentEvent!.id, 'hook_open');
+    expect(engine.currentEvent!.isArcChapter, isTrue);
+    expect(engine.currentEvent!.choices.length, 3);
+    for (final choice in engine.currentEvent!.choices) {
+      expect(choice.nextId, 'hook_2');
+      expect(choice.relId, 'friend');
+      expect(choice.relDelta, isNot(0));
+      expect(choice.effect.isEmpty, isFalse);
+    }
+    // كل خيار يغيّر درجة العلاقة فعلا، ثم يأتي الفصل الثاني فورا.
+    final friendBefore = engine.relationships['friend']!.score;
+    engine.applyChoice(engine.currentEvent!.choices.first);
+    expect(engine.relationships['friend']!.score,
+        friendBefore + engine.lastChoice!.relDelta);
+    engine.nextEvent();
+    expect(engine.currentEvent!.id, 'hook_2');
+    expect(engine.currentEvent!.isArcChapter, isTrue);
+    expect(engine.currentEvent!.choices.length, 3);
   });
 
   test('عدة حيوات مختلفة على الأقل في الأسماء أو الدول', () {

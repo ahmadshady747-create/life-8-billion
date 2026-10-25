@@ -496,6 +496,15 @@ class _GameScreenState extends State<GameScreen> {
               Text('التأثير: ${choice.effect.describe()}',
                   style: TextStyle(color: Colors.grey.shade700)),
             ],
+            if (choice.relId != null && choice.relDelta != 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                  'علاقتك مع ${_e.relationships[choice.relId]?.name ?? 'صديقك'} '
+                  '${choice.relDelta > 0 ? '+' : ''}${choice.relDelta} • '
+                  'درجتها الآن: ${_e.relationships[choice.relId]?.score ?? 0} '
+                  '(${_e.relationships[choice.relId]?.label ?? ''})',
+                  style: TextStyle(color: Colors.grey.shade700)),
+            ],
             if (choice.skillPoints != 0) ...[
               const SizedBox(height: 6),
               Text(

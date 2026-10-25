@@ -5,6 +5,7 @@ import 'data/career_events.dart';
 import 'data/countries.dart';
 import 'data/deep_events.dart';
 import 'data/events.dart';
+import 'data/hook.dart';
 import 'data/relationships.dart';
 import 'data/world_events.dart';
 import 'data/world_state.dart';
@@ -224,6 +225,9 @@ class GameEngine {
     yearlyTurn = false;
     lifespan = (68 + (stats.health - 50) ~/ 4 + _r.nextInt(36) - 15)
         .clamp(50, 102);
+    // الافتتاح يُفرض أولا، لا يُترك للعشوائية: أول حدث في كل حياة
+    // هو أزمة الزقاق، وفصله الثاني يتبعه فورا عبر nextId.
+    pendingNextId = 'hook_open';
     currentEvent = pickNextEvent();
   }
 
@@ -234,10 +238,16 @@ class GameEngine {
         ...relationshipEvents,
         ...arcStarters,
         ...careerEvents,
+        ...hookEvents,
       ];
 
   LifeEvent _findEvent(String id) {
-    for (final ev in [..._personalPool, ...worldEvents, ...arcChapters]) {
+    for (final ev in [
+      ..._personalPool,
+      ...worldEvents,
+      ...arcChapters,
+      ...hookChapters,
+    ]) {
       if (ev.id == id) return ev;
     }
     return genericEvent(age);
