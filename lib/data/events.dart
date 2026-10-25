@@ -527,6 +527,8 @@ LifeEvent genericEvent(int age) {
               const Effect(happiness: 6, social: 6), jump: 2),
           c('أقرأ وأتعلم شيئا جديدا', 'تعلمتَ شيئا صغيرا سيكبر معك لاحقا.',
               const Effect(smarts: 8), jump: 2),
+          c('ألعب رياضة في الحي', 'ركضتَ ولعبتَ حتى تعبتَ، ونمتَ ليلتها باكرا ومرتاحا.',
+              const Effect(health: 8, happiness: 4), jump: 2),
         ]);
   }
   if (age < 30) {
@@ -537,6 +539,8 @@ LifeEvent genericEvent(int age) {
               const Effect(smarts: 6, money: 6), jump: 3),
           c('أستمتع بالحاضر', 'كانت سنة مليئة بالضحك والأصدقاء.',
               const Effect(happiness: 10, social: 8, money: -4), jump: 3),
+          c('أتطوع لمساعدة غيري', 'ساعدتَ من يحتاجك، وصار اسمك معروفا بالخير في حيّك.',
+              const Effect(reputation: 8, social: 6, money: -2), jump: 3),
         ]);
   }
   if (age < 65) {
@@ -547,6 +551,8 @@ LifeEvent genericEvent(int age) {
               const Effect(money: 8, health: -2), jump: 3),
           c('أهتم بعائلتي وصحتي', 'كانت سنة متوازنة، وصحتك شكرتك عليها.',
               const Effect(health: 8, happiness: 8, money: -2), jump: 3),
+          c('أتعلم مهارة جديدة', 'أضفتَ مهارة إلى سيرتك، وصارت فرصك أوسع مما كانت.',
+              const Effect(skill: 10, smarts: 6, money: -4), jump: 3),
         ]);
   }
   return e('generic_old', age, age, 'سنة هادئة',
@@ -556,5 +562,7 @@ LifeEvent genericEvent(int age) {
             const Effect(happiness: 10, social: 8), jump: 3),
         c('أستريح وأتأمل حياتي', 'راجعتَ حياتك كلها، ووجدتَ فيها ما يستحق الفخر.',
             const Effect(happiness: 8, smarts: 4), jump: 3),
+        c('أمشي وأعتني بصحتي كل يوم', 'صار المشي عادتك، وجسدك أقوى ونومك أهدأ.',
+            const Effect(health: 10, happiness: 4), jump: 3),
       ]);
 }
