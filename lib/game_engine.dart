@@ -34,6 +34,9 @@ class GameEngine {
   final List<LogEntry> log = [];
   LifeEvent? currentEvent;
   EventChoice? lastChoice;
+
+  /// ملخص ما تغيّر فعليا بآخر قرار، يبنيه applyChoice.
+  OutcomeSummary? lastSummary;
   bool isDead = false;
   String? deathCause;
 
@@ -322,6 +325,15 @@ class GameEngine {
         outcome: choice.outcome,
       ));
     }
+    // لقطة ما قبل القرار: كل ما سيُقارن به ما بعده.
+    final statsBefore = stats.asList();
+    final balanceBefore = balance;
+    final skillBefore = skillPoints;
+    final traitsBefore = Set<String>.of(traits);
+    final achievementsBefore = Set<String>.of(achievements);
+    final jobBefore = jobTitle;
+    final ambitionBefore = ambition;
+    final childrenBefore = childrenCount;
     final hadParent = traits.contains('parent');
     stats.apply(choice.effect);
     skillPoints += choice.skillPoints;
@@ -373,6 +385,37 @@ class GameEngine {
       achievements.add('survivor');
     }
     _checkAchievements();
+
+    // ملخص التغذية الراجعة: تغيّرات فعلية بعد التقريب وكل أثر جانبي.
+    final statsAfter = stats.asList();
+    final statChanges = <StatChange>[];
+    for (var i = 0; i < statsBefore.length; i++) {
+      final delta = statsAfter[i].$3 - statsBefore[i].$3;
+      if (delta != 0) {
+        statChanges.add(StatChange(
+          label: statsAfter[i].$1,
+          icon: statsAfter[i].$2,
+          delta: delta,
+          newValue: statsAfter[i].$3,
+        ));
+      }
+    }
+    lastSummary = OutcomeSummary(
+      statChanges: statChanges,
+      balanceBefore: balanceBefore,
+      balanceAfter: balance,
+      cashDelta: choice.cash,
+      yearlyDelta: yearly * years,
+      years: years,
+      skillPointsDelta: skillPoints - skillBefore,
+      traitsAdded: traits.difference(traitsBefore).toList(),
+      traitsRemoved: traitsBefore.difference(traits).toList(),
+      jobBefore: jobBefore,
+      jobAfter: jobTitle,
+      ambitionAfter: ambitionBefore == null ? ambition : null,
+      childrenDelta: childrenCount - childrenBefore,
+      newAchievements: achievements.difference(achievementsBefore).toList(),
+    );
 
     if (choice.deathCause != null) {
       isDead = true;

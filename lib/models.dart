@@ -123,6 +123,60 @@ class Effect {
   }
 }
 
+/// تغيّر فعلي واحد في إحصاءة بعد تطبيق خيار، محسوبا بعد التقريب
+/// إلى حدود 0-100، لا مجرد الرقم المقصود: فـ +10 صحة عند 98 تعني
+/// فعليا +2 فقط، واللاعب يجب أن يرى القيمة الجديدة لا الوعد.
+class StatChange {
+  final String label;
+  final String icon;
+  final int delta;
+  final int newValue;
+
+  const StatChange({
+    required this.label,
+    required this.icon,
+    required this.delta,
+    required this.newValue,
+  });
+}
+
+/// ملخص حقيقي لما تغيّر بعد قرار واحد، يُبنى في المحرك بمقارنة
+/// ما قبل التطبيق بما بعده: إحصاءات، رصيد بتفصيله، نقاط مهارة،
+/// سمات، وظيفة، طموح، أطفال، وإنجازات جديدة. لا شيء هنا تقديري.
+class OutcomeSummary {
+  final List<StatChange> statChanges;
+  final int balanceBefore;
+  final int balanceAfter;
+  final int cashDelta;
+  final int yearlyDelta;
+  final int years;
+  final int skillPointsDelta;
+  final List<String> traitsAdded;
+  final List<String> traitsRemoved;
+  final String? jobBefore;
+  final String? jobAfter;
+  final String? ambitionAfter;
+  final int childrenDelta;
+  final List<String> newAchievements;
+
+  const OutcomeSummary({
+    required this.statChanges,
+    required this.balanceBefore,
+    required this.balanceAfter,
+    required this.cashDelta,
+    required this.yearlyDelta,
+    required this.years,
+    required this.skillPointsDelta,
+    required this.traitsAdded,
+    required this.traitsRemoved,
+    required this.jobBefore,
+    required this.jobAfter,
+    required this.ambitionAfter,
+    required this.childrenDelta,
+    required this.newAchievements,
+  });
+}
+
 /// خيار واحد داخل حدث.
 class EventChoice {
   final String text;
