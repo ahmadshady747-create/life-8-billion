@@ -353,6 +353,8 @@ final laterEvents = <LifeEvent>[
       [
         c('ألتزم بالعلاقة بجدية', 'صارت علاقتكما وعدا حقيقيا، وبدأتما تخططان للمستقبل معا.',
             const Effect(happiness: 14, social: 12), add: ['partner'], jump: 2),
+        c('نبقي العلاقة تنمو دون وعد كامل الآن', 'بقيتما معا، لكن دون التزام يغلق الباب: حب يكبر ببطء، ومستقبل ما زال مفتوحا.',
+            const Effect(happiness: 6, social: 6), jump: 2),
         c('أطلب وقتا للتفكير', 'ابتعدتما بهدوء، وبقيتَ تتساءل أحيانا: ماذا لو؟',
             const Effect(happiness: -6, social: -2), jump: 2),
       ], forbids: 'partner'),
@@ -371,6 +373,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أقبل وأغترب', 'صارت الغربة مدرستك الثانية، وصرتَ مواطنا في العالم.',
             const Effect(money: 16, happiness: 4, social: -6), add: ['traveler'], jump: 3),
+        c('أقبل عقدا قصيرا ثم أعود', 'سافرتَ لفترة محدودة، كسبتَ خبرة ومالا، ثم عدتَ إلى من تحب قبل أن تصير الغربة وطنا.',
+            const Effect(money: 8, happiness: 6, social: -2), jump: 2),
         c('أرفض وأبقى قرب أهلي', 'بقيتَ قرب من تحب، وكان قربهم أغلى من أي راتب.',
             const Effect(happiness: 8, social: 10, money: -4), jump: 2),
       ]),
@@ -380,6 +384,8 @@ final laterEvents = <LifeEvent>[
         c('نعم، أقبل', 'كان زفافا بسيطا وجميلا، وبدأتَ حياة مشتركة حقيقية.',
             const Effect(happiness: 16, social: 12, money: -8),
             add: ['married'], remove: ['partner'], jump: 2),
+        c('نعيش معا دون زواج رسمي الآن', 'بقيتما شريكين دون خاتم ولا عقد: حياة مشتركة حقيقية، لكن باب الزواج ما زال مفتوحا لوقت آخر.',
+            const Effect(happiness: 8, social: 6), jump: 2),
         c('ليس الآن', 'انتهت العلاقة بهدوء مؤلم، وبقيتَ وحدك لفترة.',
             const Effect(happiness: -12, social: -6), remove: ['partner'], jump: 2),
       ], requires: 'partner'),
@@ -388,6 +394,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أستقبل الطفل بفرح', 'صار لطفلك ضحكة تملأ البيت، وصارت حياتك لها معنى جديد.',
             const Effect(happiness: 18, money: -10, health: -2), add: ['parent'], jump: 3),
+        c('أشارك أهلي رعاية الطفل وأوازن حياتي', 'لم تكن وحدك في الرعاية: دعم العائلة خفف العبء، وبقيتَ حاضرا دون أن تنهار حياتك كلها.',
+            const Effect(happiness: 12, money: -6, social: 4), add: ['parent'], jump: 3),
         c('أشعر بالخوف لكني أتحمل المسؤولية', 'كان الخوف حقيقيا، والحب كان أكبر منه.',
             const Effect(happiness: 8, money: -8), add: ['parent'], jump: 3),
       ], requires: 'married', forbids: 'parent'),
