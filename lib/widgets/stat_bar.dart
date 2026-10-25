@@ -5,12 +5,14 @@ class StatBar extends StatelessWidget {
   final String icon;
   final String label;
   final int value;
+  final VoidCallback? onTap;
 
   const StatBar({
     super.key,
     required this.icon,
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   Color get _color {
@@ -21,7 +23,7 @@ class StatBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
@@ -52,6 +54,12 @@ class StatBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (onTap == null) return row;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: row,
     );
   }
 }

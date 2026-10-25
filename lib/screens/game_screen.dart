@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/stat_meanings.dart';
 import '../game_engine.dart';
 import '../models.dart';
 import '../widgets/stat_bar.dart';
@@ -220,6 +221,24 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  void _showStatMeaning(String label, int value) {
+    final meaning = statMeanings[label];
+    if (meaning == null) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$label: $value • ${statLevelLabel(value)}'),
+        content: Text('${meaning.meaning}\n\n${meaning.effect}',
+            style: const TextStyle(fontSize: 16, height: 1.7)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('فهمت')),
+        ],
+      ),
+    );
+  }
+
   Widget _statsCard() {
     final traits = _e.traits
         .map((t) => traitLabels[t] ?? t)
@@ -231,8 +250,18 @@ class _GameScreenState extends State<GameScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const Text('📊 إحصاءاتك',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('اضغط أي إحصاءة لتعرف معناها وأثرها على حياتك.',
+                style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 8),
             for (final s in _e.stats.asList())
-              StatBar(icon: s.$2, label: s.$1, value: s.$3),
+              StatBar(
+                  icon: s.$2,
+                  label: s.$1,
+                  value: s.$3,
+                  onTap: () => _showStatMeaning(s.$1, s.$3)),
             if (traits.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
