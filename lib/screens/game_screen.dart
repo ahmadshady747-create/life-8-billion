@@ -157,6 +157,8 @@ class _GameScreenState extends State<GameScreen> {
                   const SizedBox(height: 12),
                   _statsCard(),
                   const SizedBox(height: 12),
+                  _worldCard(),
+                  const SizedBox(height: 12),
                   if (_e.relationships.isNotEmpty) _relationshipsCard(),
                   if (_e.relationships.isNotEmpty) const SizedBox(height: 12),
                   if (_e.jobTitle != null) _careerCard(),
@@ -253,6 +255,34 @@ class _GameScreenState extends State<GameScreen> {
                     .toList(),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _worldCard() {
+    final salaryPct =
+        ((_e.worldSalaryFactor - 1) * 100).round();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('🌍 حالة العالم من حولك',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(_e.worldHeadlineText,
+                style: TextStyle(color: Colors.grey.shade700)),
+            const SizedBox(height: 8),
+            Text(
+                'اقتصاد: ${_e.worldEconomy} • عصر: ${_e.worldTech} • أثره على راتبك: ${salaryPct >= 0 ? '+' : ''}$salaryPct%',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(
+                'العالم لا ينتظرك: مرحلة اقتصادية واحدة قد ترفع دخلك أو تضربه لسنوات، ثم تنقلب فجأة.',
+                style: TextStyle(color: Colors.grey.shade600)),
           ],
         ),
       ),

@@ -7,6 +7,7 @@ import 'data/deep_events.dart';
 import 'data/events.dart';
 import 'data/relationships.dart';
 import 'data/world_events.dart';
+import 'data/world_state.dart';
 import 'data/yearly_events.dart';
 import 'models.dart';
 
@@ -79,6 +80,44 @@ class GameEngine {
   String? ambition;
   final Set<String> achievements = {};
   int lastWorldAge = -99;
+
+  /// حالة العالم المستمرة: مرحلة اقتصادية وعصر تقني يبقيان سنوات ثم
+  /// ينقلبان، فيغيّران الرواتب والمصاريف فعليا لا رقميا فقط.
+  String worldEconomy = 'تعافٍ';
+  String worldTech = 'عصر رقمي';
+  int lastWorldShiftAge = 0;
+
+  double get worldSalaryFactor => worldSalaryMultiplier(worldEconomy);
+  double get worldExpenseFactor => worldExpenseMultiplier(worldEconomy);
+  String get worldHeadlineText => worldHeadline(worldEconomy, worldTech);
+
+  /// ينقلب العالم كل 6 سنوات على الأقل بعد سن 18: باحتمال كبير تتغير
+  /// المرحلة الاقتصادية، وأحيانا العصر التقني معها. الانقلاب يُسجَّل
+  /// في سجل الحياة حتى يراه اللاعب لحظة حدوثه، لا بعد سنوات.
+  void maybeShiftWorldState() {
+    if (age < 18 || age - lastWorldShiftAge < 6) return;
+    final oldEconomy = worldEconomy;
+    final oldTech = worldTech;
+    if (_r.nextDouble() < 0.65) {
+      final others =
+          worldEconomies.where((e) => e != worldEconomy).toList();
+      worldEconomy = others[_r.nextInt(others.length)];
+    }
+    if (_r.nextDouble() < 0.3) {
+      final others = worldTechs.where((t) => t != worldTech).toList();
+      worldTech = others[_r.nextInt(others.length)];
+    }
+    if (worldEconomy != oldEconomy || worldTech != oldTech) {
+      lastWorldShiftAge = age;
+      log.add(LogEntry(
+        age: age,
+        title: '📰 تغيّر العالم من حولك',
+        choice: '—',
+        outcome:
+            'انقلب العالم: كان الاقتصاد في $oldEconomy وصار في $worldEconomy، و$worldTech يحل محل $oldTech. رواتب الناس وأسعارهم تغيرت معه، سواء أردتَ ذلك أم لا.',
+      ));
+    }
+  }
 
   /// شخصيات بذاكرة: درجة علاقة تتغير بالقرارات وتظهر في الواجهة.
   final Map<String, Relationship> relationships = {};
@@ -178,6 +217,9 @@ class GameEngine {
     ambition = null;
     achievements.clear();
     lastWorldAge = -99;
+    worldEconomy = 'تعافٍ';
+    worldTech = 'عصر رقمي';
+    lastWorldShiftAge = 0;
     pendingNextId = null;
     yearlyTurn = false;
     lifespan = (68 + (stats.health - 50) ~/ 4 + _r.nextInt(36) - 15)
@@ -302,12 +344,14 @@ class GameEngine {
     final years = choice.ageJump;
     var yearly = 0;
     if (traits.contains('employed') && jobSalary > 0) {
-      // الراتب الفعلي يتضاعف مع المستوى المهني، لا الراتب الأساسي وحده.
-      yearly += effectiveSalary;
+      // الراتب الفعلي يتضاعف مع المستوى المهني، ثم يتأثر بحالة العالم:
+      // كساد يضرب دخلك ولو كنت مجتهدا، وازدهار يرفعه ولو لم تترقَّ.
+      yearly += (effectiveSalary * worldSalaryFactor).round();
       // نقاط مهارة سنوية: سنة عمل تمنح نقطة أو أكثر حسب مهارتك الحالية.
       skillPoints += years * (1 + stats.skill ~/ 50);
     }
-    var expenses = (15000 * (0.5 + country.economy / 100)).round();
+    var expenses =
+        (15000 * (0.5 + country.economy / 100) * worldExpenseFactor).round();
     if (traits.contains('chronic')) {
       expenses += (4000 * (2 - country.healthcare / 100)).round();
     }
@@ -334,6 +378,8 @@ class GameEngine {
       }
       return choice.outcome;
     }
+    // العالم يستمر من حولك: قد ينقلب بعد سنوات من الاستقرار.
+    maybeShiftWorldState();
     return choice.outcome;
   }
 
@@ -425,6 +471,9 @@ class GameEngine {
         'ambition': ambition,
         'achievements': achievements.toList(),
         'lastWorldAge': lastWorldAge,
+        'worldEconomy': worldEconomy,
+        'worldTech': worldTech,
+        'lastWorldShiftAge': lastWorldShiftAge,
         'pendingNextId': pendingNextId,
         'yearlyTurn': yearlyTurn,
         'relationships': relationships.values.map((r) => r.toJson()).toList(),
@@ -452,6 +501,10 @@ class GameEngine {
     engine.achievements
         .addAll((j['achievements'] as List).map((e) => e as String));
     engine.lastWorldAge = (j['lastWorldAge'] as num).toInt();
+    engine.worldEconomy = j['worldEconomy'] as String? ?? 'تعافٍ';
+    engine.worldTech = j['worldTech'] as String? ?? 'عصر رقمي';
+    engine.lastWorldShiftAge =
+        (j['lastWorldShiftAge'] as num?)?.toInt() ?? 0;
     engine.pendingNextId = j['pendingNextId'] as String?;
     engine.yearlyTurn = j['yearlyTurn'] as bool? ?? false;
     final rels = j['relationships'] as List?;

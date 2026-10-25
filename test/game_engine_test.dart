@@ -149,6 +149,30 @@ void main() {
     expect(restored.careerTier, engine2.careerTier);
   });
 
+  test('عالم ديناميكي مستمر: مرحلة العالم تغيّر الراتب والمصاريف وتُحفظ', () {
+    final engine = GameEngine()..newLife();
+    expect(engine.worldEconomy, 'تعافٍ');
+    expect(engine.worldHeadlineText, contains('تعافٍ'));
+
+    engine.worldEconomy = 'كساد';
+    expect(engine.worldSalaryFactor, 0.75);
+    expect(engine.worldExpenseFactor, 0.90);
+    engine.worldEconomy = 'ازدهار';
+    expect(engine.worldSalaryFactor, 1.15);
+    expect(engine.worldExpenseFactor, 1.10);
+
+    // الحفظ والاستئناف يحفظان حالة العالم كاملة.
+    engine.worldEconomy = 'ركود';
+    engine.worldTech = 'عصر فضاء';
+    engine.lastWorldShiftAge = 30;
+    final json = engine.toJson();
+    final restored = GameEngine.fromJson(json);
+    expect(restored.worldEconomy, 'ركود');
+    expect(restored.worldTech, 'عصر فضاء');
+    expect(restored.lastWorldShiftAge, 30);
+    expect(restored.worldHeadlineText, contains('عصر فضاء'));
+  });
+
   test('عدة حيوات مختلفة على الأقل في الأسماء أو الدول', () {
     final seen = <String>{};
     for (var i = 0; i < 20; i++) {
