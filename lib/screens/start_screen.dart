@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// شاشة البداية: شرح الفكرة وزر بدء حياة عشوائية.
+/// شاشة البداية: تُفهم من أول نظرة، دون شرح طويل.
+/// زر بدء واحد واضح، واستئناف ثانوي للحياة المحفوظة، وشريط من ثلاث
+/// خطوات يلخّص دورة اللعب كلها: تولد، تختار، تُروى قصتك.
 class StartScreen extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback? onContinue;
@@ -29,64 +31,65 @@ class StartScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('🌍', textAlign: TextAlign.center,
+                  const Text('🌍',
+                      textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 72)),
                   const SizedBox(height: 16),
                   const Text(
                     'واحد من 8 مليارات',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontSize: 32, fontWeight: FontWeight.bold),
+                        fontSize: 34, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'حياة واحدة. قراراتك أنت. وقصة تُروى حتى النهاية.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, height: 1.7),
+                  ),
+                  const SizedBox(height: 28),
+                  const Row(
+                    children: [
+                      Expanded(child: _Step(icon: '🎲', label: 'تولد')),
+                      SizedBox(width: 8),
+                      Text('›', style: TextStyle(fontSize: 22)),
+                      SizedBox(width: 8),
+                      Expanded(child: _Step(icon: '🧭', label: 'تختار')),
+                      SizedBox(width: 8),
+                      Text('›', style: TextStyle(fontSize: 22)),
+                      SizedBox(width: 8),
+                      Expanded(child: _Step(icon: '📖', label: 'تُروى قصتك')),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'لن تختار أين تولد، ولا من تكون. في كل جولة تولد شخصا عشوائيا '
-                    'في مكان ما من العالم، ثم تتخذ قراراته من طفولته حتى موته، '
-                    'وتُبنى قصة حياته من اختياراتك أنت.',
+                    'كل قرار له ثمن، وكل حياة تنتهي بسؤال واحد: كيف عشتها؟',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 17, height: 1.7),
+                    style: TextStyle(fontSize: 15, height: 1.7),
                   ),
-                  const SizedBox(height: 24),
-                  const _Point(
-                      icon: '🎲',
-                      text: 'ولادة عشوائية: اسم ودولة وجنس وطبقة عائلية مختلفة كل مرة'),
-                  const _Point(
-                      icon: '🧭',
-                      text: 'قرارات عمرية: مدرسة، حب، عمل، زواج، أطفال، تقاعد، وإرث'),
-                  const _Point(
-                      icon: '💼',
-                      text: 'أنظمة عميقة: مهنة وراتب وادخار واستثمار، وطموح حياة يُقاس في النهاية، وإنجازات'),
-                  const _Point(
-                      icon: '🌍',
-                      text: 'عالم حي: أزمات اقتصادية، أوبئة، حروب، ثورات تقنية وسياسات دول تؤثر عليك وأنت تعيش'),
-                  const _Point(
-                      icon: '📖',
-                      text: 'سجل حياة كامل: كل قرار ونتيجته يُكتب في قصتك'),
-                  const _Point(
-                      icon: '🕯️',
-                      text: 'نهاية حتمية: كل حياة تنتهي، والسؤال هو: كيف عشتها؟'),
-                  const SizedBox(height: 32),
-                  if (onContinue != null && savedName != null) ...[
-                    FilledButton(
-                      onPressed: onContinue,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        textStyle: const TextStyle(
-                            fontSize: 19, fontWeight: FontWeight.bold),
-                      ),
-                      child: Text('واصل حياة $savedName (عمر ${savedAge ?? 0}) ▶️'),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+                  const SizedBox(height: 36),
                   FilledButton(
                     onPressed: onStart,
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       textStyle: const TextStyle(
-                          fontSize: 19, fontWeight: FontWeight.bold),
+                          fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     child: const Text('ابدأ حياة جديدة 🎲'),
                   ),
+                  if (onContinue != null && savedName != null) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: onContinue,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        textStyle: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.bold),
+                      ),
+                      child: Text(
+                          'واصل حياة $savedName (عمر ${savedAge ?? 0}) ▶️'),
+                    ),
+                  ],
                   if (livesPlayed > 0) ...[
                     const SizedBox(height: 16),
                     Text(
@@ -97,7 +100,7 @@ class StartScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 24),
                   Text(
-                    'لعبة قصصية مجانية، تعمل دون إنترنت، ولا تجمع أي بيانات.',
+                    'تعمل دون إنترنت، ولا تجمع أي بيانات.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 13, color: Colors.grey.shade600),
@@ -112,26 +115,27 @@ class StartScreen extends StatelessWidget {
   }
 }
 
-class _Point extends StatelessWidget {
+class _Step extends StatelessWidget {
   final String icon;
-  final String text;
+  final String label;
 
-  const _Point({required this.icon, required this.text});
+  const _Step({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(text,
-                style: const TextStyle(fontSize: 16, height: 1.6)),
-          ),
-        ],
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        child: Column(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 26)),
+            const SizedBox(height: 6),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
