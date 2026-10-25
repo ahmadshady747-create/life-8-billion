@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 /// خطوات يلخّص دورة اللعب كلها: تولد، تختار، تُروى قصتك.
 class StartScreen extends StatelessWidget {
   final VoidCallback onStart;
+  final VoidCallback? onManagement;
   final VoidCallback? onContinue;
   final String? savedName;
   final int? savedAge;
@@ -13,6 +14,7 @@ class StartScreen extends StatelessWidget {
   const StartScreen({
     super.key,
     required this.onStart,
+    this.onManagement,
     this.onContinue,
     this.savedName,
     this.savedAge,
@@ -77,6 +79,18 @@ class StartScreen extends StatelessWidget {
                     ),
                     child: const Text('ابدأ حياة جديدة 🎲'),
                   ),
+                  if (onManagement != null) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: onManagement,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        textStyle: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.bold),
+                      ),
+                      child: const Text('لوحة إدارة الحياة الجديدة 🧭'),
+                    ),
+                  ],
                   if (onContinue != null && savedName != null) ...[
                     const SizedBox(height: 12),
                     OutlinedButton(

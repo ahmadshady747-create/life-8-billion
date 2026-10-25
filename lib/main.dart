@@ -5,6 +5,7 @@ import 'game_engine.dart';
 import 'save_service.dart';
 import 'screens/death_screen.dart';
 import 'screens/game_screen.dart';
+import 'screens/life_management_screen.dart';
 import 'screens/start_screen.dart';
 
 void main() {
@@ -94,12 +95,21 @@ class _LifeAppState extends State<LifeApp> {
         ),
       ),
       home: switch (_screen) {
-        _Screen.start => StartScreen(
+        _Screen.start => Builder(
+            builder: (ctx) => StartScreen(
             onStart: _startNewLife,
+            onManagement: () {
+              Navigator.of(ctx).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const LifeManagementScreen(),
+                ),
+              );
+            },
             onContinue: _loadingSaved ? null : (_savedLife == null ? null : _continueSaved),
             savedName: _savedLife?.person.fullName,
             savedAge: _savedLife?.age,
             livesPlayed: _livesPlayed,
+          ),
           ),
         _Screen.game => GameScreen(
             key: ValueKey(_livesPlayed),
