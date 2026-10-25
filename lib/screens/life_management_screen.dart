@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../life_management.dart';
 
-/// لوحة إدارة الحياة الأولية: أساس المحاكاة الإدارية، لا بطاقة حدث.
+/// لوحة إدارة الحياة: أساس المحاكاة الإدارية، لا بطاقة حدث.
 /// ثمانية تبويبات تعرض الموارد الحقيقية، وزر واحد "تقدم شهرا"
-/// ينفذ الشهر ويعرض تقريره. بدء المشاريع والحفظ الكامل يأتيان
-/// في جولات لاحقة، تبويبا تبويبا.
+/// ينفذ الشهر ويعرض تقريره، وتبويب المشاريع يبدأ مشروعا واحدا
+/// نشطا بثمن مقدّم ويعرض تقدمه حتى اكتماله.
 class LifeManagementScreen extends StatefulWidget {
   const LifeManagementScreen({super.key});
 
@@ -248,11 +248,11 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       'وقت العلاقات فوق 15 يحسّن علاقاتك، وتحته يضعفها. العلاقات هنا مورد إداري لا حدثا عابرا.'),
                 ]),
                 _panel([
-                  const Text('مشاريع مخططة',
+                  const Text('مشاريع',
                       style: TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
                   const Text(
-                      'هذه المشاريع معروضة بمددها وتكاليفها وآثارها المقصودة، وبدؤها وتقدمها يأتيان في جولة المشاريع اللاحقة.'),
+                      'مشروع واحد نشط فقط: ثمنه يُدفع مقدما من نقدك، ويتقدم مع كل شهر، وأثره يُطبق مرة واحدة عند اكتماله ولا يُعاد بدؤه.'),
                   const SizedBox(height: 8),
                   for (final p in LifeManagementState.projectCatalog)
                     Card(
@@ -270,7 +270,29 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                             Text(
                                 'المدة: ${p.durationMonths} أشهر — التكلفة: ${p.cost}'),
                             Text('عند الاكتمال: ${p.effect}'),
-                            const Text('قيد الإعداد — البدء في جولة لاحقة'),
+                            if (s.completedProjectIds.contains(p.id))
+                              const Text('مكتمل ✓ — أثره مطبّق ولا يُعاد بدؤه')
+                            else if (s.activeProjectId == p.id) ...[
+                              const SizedBox(height: 6),
+                              LinearProgressIndicator(
+                                value: s.activeProjectMonths /
+                                    p.durationMonths,
+                              ),
+                              Text(
+                                  'نشط الآن: شهر ${s.activeProjectMonths} من ${p.durationMonths}'),
+                            ] else
+                              FilledButton(
+                                onPressed: s.activeProjectId != null ||
+                                        s.cash < p.cost
+                                    ? null
+                                    : () => setState(
+                                        () => s.startProject(p.id)),
+                                child: Text(s.activeProjectId != null
+                                    ? 'مشروع آخر نشط الآن'
+                                    : s.cash < p.cost
+                                        ? 'النقد لا يكفي لبدئه'
+                                        : 'ابدأ المشروع (${p.cost})'),
+                              ),
                           ],
                         ),
                       ),

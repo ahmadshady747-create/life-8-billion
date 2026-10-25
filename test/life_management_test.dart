@@ -86,4 +86,70 @@ void main() {
     expect(restored.months, s.months);
     expect(restored.skill, s.skill);
   });
+
+  test('بدء مشروع يخصم ثمنه مقدما ويرفض مشروعا ثانيا ومشروعا بلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness'), isTrue);
+    expect(s.cash, 5000 - 800);
+    expect(s.activeProjectId, 'fitness');
+    expect(s.startProject('certificate'), isFalse);
+    expect(s.cash, 4200);
+    final poor = LifeManagementState(cash: 100);
+    expect(poor.startProject('certificate'), isFalse);
+    expect(poor.cash, 100);
+    expect(poor.activeProjectId, isNull);
+  });
+
+  test('برنامج اللياقة يكتمل بعد 4 أشهر ويضيف صحة 15 ولا يُعاد بدؤه', () {
+    final s = LifeManagementState();
+    s.startProject('fitness');
+    MonthReport? last;
+    for (var i = 0; i < 4; i++) {
+      last = s.advanceMonth();
+    }
+    expect(s.activeProjectId, isNull);
+    expect(s.completedProjectIds, contains('fitness'));
+    expect(last!.lines.any((l) => l.contains('اكتمل مشروع برنامج لياقة')),
+        isTrue);
+    expect(s.startProject('fitness'), isFalse);
+  });
+
+  test('الشهادة تكتمل بعد 6 أشهر وتضيف مهارة 20 فوق أثر الشهر العادي', () {
+    final s = LifeManagementState();
+    s.startProject('certificate');
+    for (var i = 0; i < 6; i++) {
+      s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('certificate'));
+    // مهارة البداية 30 + 3 شهريا من الدراسة والتعلم × 6 = 48، +20 للشهادة = 68.
+    expect(s.skill, 68);
+  });
+
+  test('المشروع الجانبي يكتمل بعد 12 شهرا ويضيف دخلا شهريا دائما 600', () {
+    final s = LifeManagementState(cash: 50000);
+    s.startProject('side_business');
+    for (var i = 0; i < 12; i++) {
+      s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('side_business'));
+    expect(s.extraMonthlyIncome, 600);
+    expect(s.monthlyIncome, 1000 + 40 * 15 + s.skill * 3 + 600);
+  });
+
+  test('حفظ واسترجاع المشروع النشط والمكتمل والدخل الإضافي', () {
+    final s = LifeManagementState();
+    s.startProject('fitness');
+    s.advanceMonth();
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'fitness');
+    expect(restored.activeProjectMonths, 1);
+    for (var i = 0; i < 3; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('fitness'));
+    final old = LifeManagementState.fromJson({});
+    expect(old.activeProjectId, isNull);
+    expect(old.extraMonthlyIncome, 0);
+  });
 }

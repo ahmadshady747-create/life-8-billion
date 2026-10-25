@@ -1,8 +1,9 @@
 /// لوحة إدارة الحياة: أساس المحاكاة الإدارية للعبة واحد من 8 مليارات.
 /// ليست لعبة خيارات: اللاعب يوزّع ميزانية وقته وماله، ثم يضغط
 /// "تقدم شهرا" ويرى النتائج المحسوبة، لا نتيجة خيار سردي واحد.
-/// محتوى الخيارات القديم لم يُمسّ في هذه الجولة، واللوحة ليست بعد
-/// الشاشة الرئيسية؛ بدء المشاريع والحفظ الكامل يأتيان في جولات لاحقة.
+/// محتوى الخيارات القديم لم يُمسّ، واللوحة ليست بعد الشاشة الرئيسية.
+/// المشاريع: مشروع واحد نشط فقط، ثمنه مقدّم من النقد، يتقدم شهرا
+/// بعد شهر، وأثره يُطبق مرة واحدة عند الاكتمال، ولا يُعاد بدؤه.
 ///
 /// قواعد الأرقام (أصلية، بأرقام لعب لا بيانات رسمية):
 /// - ميزانية الوقت 100 نقطة موزعة على عمل ودراسة وصحة وعلاقات وراحة.
@@ -40,8 +41,8 @@ class MonthReport {
   });
 }
 
-/// مشروع مخطط: يُعرض في تبويب المشاريع بمدته وتكلفته وأثره المقصود،
-/// لكن بدءه وتقدمه يأتيان في جولة المشاريع اللاحقة، لا في هذه الجولة.
+/// مشروع إداري: يُبدأ بثمن مقدّم، يتقدم مع كل شهر، ويُطبق أثره
+/// مرة واحدة عند الاكتمال. مشروع واحد نشط فقط في كل وقت.
 class LifeProjectPlan {
   final String id;
   final String name;
@@ -125,6 +126,10 @@ class LifeManagementState {
   int health;
   int skill;
   int relationships;
+  int extraMonthlyIncome;
+  String? activeProjectId;
+  int activeProjectMonths;
+  final Set<String> completedProjectIds;
   final Map<String, int> time;
   final Map<String, int> money;
 
@@ -136,14 +141,46 @@ class LifeManagementState {
     this.health = 75,
     this.skill = 30,
     this.relationships = 50,
+    this.extraMonthlyIncome = 0,
+    this.activeProjectId,
+    this.activeProjectMonths = 0,
+    Set<String>? completedProjectIds,
     Map<String, int>? time,
     Map<String, int>? money,
-  })  : time = time ??
+  })  : completedProjectIds = completedProjectIds ?? {},
+        time = time ??
             {'work': 40, 'study': 20, 'health': 15, 'relationships': 15, 'rest': 10},
         money = money ??
             {'housing': 35, 'food': 25, 'savings': 20, 'learning': 10, 'leisure': 10};
 
-  int get monthlyIncome => 1000 + time['work']! * 15 + skill * 3;
+  int get monthlyIncome =>
+      1000 + time['work']! * 15 + skill * 3 + extraMonthlyIncome;
+
+  LifeProjectPlan? get activeProject {
+    if (activeProjectId == null) return null;
+    for (final p in projectCatalog) {
+      if (p.id == activeProjectId) return p;
+    }
+    return null;
+  }
+
+  /// يبدأ مشروعا بثمنه مقدّما من النقد. يرفض إن كان هناك مشروع نشط
+  /// آخر، أو كان المشروع مكتملا من قبل، أو لم يكفِ النقد. يعيد
+  /// true عند البدء فعلا، وfalse عند الرفض، بلا أي خصم عند الرفض.
+  bool startProject(String id) {
+    LifeProjectPlan? plan;
+    for (final p in projectCatalog) {
+      if (p.id == id) plan = p;
+    }
+    if (plan == null) return false;
+    if (activeProjectId != null) return false;
+    if (completedProjectIds.contains(id)) return false;
+    if (cash < plan.cost) return false;
+    cash -= plan.cost;
+    activeProjectId = id;
+    activeProjectMonths = 0;
+    return true;
+  }
 
   int get monthlyExpenses =>
       300 + (money['housing']! + money['food']! + money['leisure']!) * 8;
@@ -214,6 +251,35 @@ class LifeManagementState {
     months += 1;
     ageYears = 18 + months ~/ 12;
 
+    String? projectLine;
+    final project = activeProject;
+    if (project != null) {
+      activeProjectMonths += 1;
+      if (activeProjectMonths >= project.durationMonths) {
+        completedProjectIds.add(project.id);
+        activeProjectId = null;
+        activeProjectMonths = 0;
+        switch (project.id) {
+          case 'certificate':
+            skill = _clampScore(skill + 20);
+            projectLine = 'اكتمل مشروع ${project.name}: المهارة +20 (الآن $skill).';
+            break;
+          case 'side_business':
+            extraMonthlyIncome += 600;
+            projectLine =
+                'اكتمل مشروع ${project.name}: دخل شهري إضافي دائم +600.';
+            break;
+          case 'fitness':
+            health = _clampScore(health + 15);
+            projectLine = 'اكتمل مشروع ${project.name}: الصحة +15 (الآن $health).';
+            break;
+        }
+      } else {
+        projectLine =
+            'مشروع نشط: ${project.name} — شهر $activeProjectMonths من ${project.durationMonths}.';
+      }
+    }
+
     final lines = <String>[
       'دخل الشهر: $income — مصروف الشهر: $expenses — ادخار: $deposit.',
       'صافي النقد هذا الشهر: ${cashDelta >= 0 ? '+' : ''}$cashDelta (النقد الآن $cash).',
@@ -232,6 +298,9 @@ class LifeManagementState {
     }
     if (time['work']! >= 60) {
       lines.add('شهر عمل مكثف: دخل أعلى الآن، لكنه يأكل وقت الصحة والعلاقات والدراسة.');
+    }
+    if (projectLine != null) {
+      lines.add(projectLine);
     }
     return MonthReport(
       month: months,
@@ -254,6 +323,10 @@ class LifeManagementState {
         'health': health,
         'skill': skill,
         'relationships': relationships,
+        'extraMonthlyIncome': extraMonthlyIncome,
+        'activeProjectId': activeProjectId,
+        'activeProjectMonths': activeProjectMonths,
+        'completedProjectIds': completedProjectIds.toList(),
         'time': Map<String, int>.from(time),
         'money': Map<String, int>.from(money),
       };
@@ -276,6 +349,14 @@ class LifeManagementState {
       health: (j['health'] as num?)?.toInt() ?? 75,
       skill: (j['skill'] as num?)?.toInt() ?? 30,
       relationships: (j['relationships'] as num?)?.toInt() ?? 50,
+      extraMonthlyIncome: (j['extraMonthlyIncome'] as num?)?.toInt() ?? 0,
+      activeProjectId: j['activeProjectId'] as String?,
+      activeProjectMonths: (j['activeProjectMonths'] as num?)?.toInt() ?? 0,
+      completedProjectIds: j['completedProjectIds'] is List
+          ? (j['completedProjectIds'] as List)
+              .map((e) => e.toString())
+              .toSet()
+          : null,
       time: bucket(
           j['time'], {'work': 40, 'study': 20, 'health': 15, 'relationships': 15, 'rest': 10}),
       money: bucket(
