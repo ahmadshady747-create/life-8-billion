@@ -313,6 +313,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أذاكر ليلا وأطلب المساعدة', 'نجحتَ، وصارت لديك عادة طلب المساعدة عند الحاجة.',
             const Effect(smarts: 12, happiness: 4), jump: 2),
+        c('أدرس مع مجموعة وأشارك الملخصات', 'لم تكن الأول، لكنك فهمتَ المواد بعمق، وصار لك رفاق دراسة حقيقيون.',
+            const Effect(smarts: 8, social: 8, happiness: 2), jump: 2),
         c('أترك الجامعة وأعمل', 'تركتَ الدراسة، ودخلتَ العمل بخبرة الحياة لا الشهادة.',
             const Effect(money: 8, smarts: -6), add: ['employed'], remove: ['student'], jump: 2),
       ], requires: 'student'),
@@ -321,6 +323,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أبني صداقات عميقة', 'صار لك أصدقاء عمر، وقفوا معك في كل منعطف لاحق.',
             const Effect(social: 14, happiness: 10), jump: 2),
+        c('أشارك في الأندية والأنشطة دون التزام عميق', 'عرفتَ وجوها كثيرة، وكان لك مكان في كل نشاط دون أن تذوب في أحدها.',
+            const Effect(social: 8, happiness: 6, smarts: 2), jump: 2),
         c('أبقى وحيدا وأركز على الدراسة', 'تخرجتَ بتفوق، لكن ذكرياتك الجامعية بلا وجوه.',
             const Effect(smarts: 10, social: -6), jump: 2),
       ]),
@@ -329,6 +333,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أستعد جيدا وأكون صادقا', 'قُبلتَ، وكان أول راتب في حياتك يوما لا يُنسى.',
             const Effect(money: 14, happiness: 12, social: 4), add: ['employed'], jump: 2),
+        c('أبدأ بعمل حر صغير ريثما أجد وظيفة', 'لم تكن وظيفة أحلامك، لكنك كسبتَ خبرة ومالا، وبقي باب الوظيفة مفتوحا.',
+            const Effect(money: 6, smarts: 4, happiness: 2), jump: 2),
         c('أبالغ في خبراتي', 'كُشفتَ في أول أسبوع، وخرجتَ بدرس قاسٍ عن الصدق.',
             const Effect(money: -4, happiness: -8), jump: 1),
       ], forbids: 'employed'),
@@ -337,6 +343,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أذهب معهم', 'رأيتَ العالم بعينيك، وعدتَ بقصص تكفي لعمر كامل.',
             const Effect(happiness: 16, money: -12, social: 10), add: ['traveler'], jump: 2),
+        c('أذهب في رحلة قصيرة قريبة بميزانية صغيرة', 'لم تكن الرحلة الكبيرة، لكنك رأيتَ أماكن جديدة، وعدتَ بمالك شبه كامل.',
+            const Effect(happiness: 8, money: -4, social: 6), jump: 2),
         c('أبقى وأدخر المال', 'بقي مالك في جيبك، وبقيتَ تحلم بالرحلة كلما رأيتَ صورهم.',
             const Effect(money: 10, happiness: -4), jump: 2),
       ]),
