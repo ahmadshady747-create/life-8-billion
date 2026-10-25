@@ -152,6 +152,9 @@ class EventChoice {
   final String? relId;
   final int relDelta;
 
+  /// نقاط مهارة مهنية يمنحها هذا الخيار مباشرة (تدريب، ترقية...).
+  final int skillPoints;
+
   const EventChoice({
     required this.text,
     required this.outcome,
@@ -167,6 +170,7 @@ class EventChoice {
     this.nextId,
     this.relId,
     this.relDelta = 0,
+    this.skillPoints = 0,
   });
 }
 

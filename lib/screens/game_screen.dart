@@ -159,6 +159,8 @@ class _GameScreenState extends State<GameScreen> {
                   const SizedBox(height: 12),
                   if (_e.relationships.isNotEmpty) _relationshipsCard(),
                   if (_e.relationships.isNotEmpty) const SizedBox(height: 12),
+                  if (_e.jobTitle != null) _careerCard(),
+                  if (_e.jobTitle != null) const SizedBox(height: 12),
                   if (_showBirth)
                     _birthCard()
                   else if (_showOutcome)
@@ -303,6 +305,53 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Widget _careerCard() {
+    final next = _e.nextTierPoints;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('💼 مسارك المهني',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(
+                '${_e.jobTitle} • مستوى ${_e.careerTier} • راتب فعلي ${formatMoney(_e.effectiveSalary)} سنويا',
+                style: TextStyle(color: Colors.grey.shade700)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('🛠️ نقاط المهارة: ',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('${_e.skillPoints}${next != null ? ' / $next للمستوى التالي' : ' (القمة)'}'),
+              ],
+            ),
+            if (next != null) ...[
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: (_e.skillPoints / next).clamp(0.0, 1.0),
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.shade200,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+            if (_e.careerTierIndex == 2)
+              const Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Text(
+                    'للقيادة تحتاج 70 نقطة وسمعة 40 على الأقل: الخبرة وحدها لا تكفي.',
+                    style: TextStyle(color: Colors.grey)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _birthCard() {
     final person = _e.person;
     return Card(
@@ -415,6 +464,12 @@ class _GameScreenState extends State<GameScreen> {
             if (!choice.effect.isEmpty) ...[
               const SizedBox(height: 12),
               Text('التأثير: ${choice.effect.describe()}',
+                  style: TextStyle(color: Colors.grey.shade700)),
+            ],
+            if (choice.skillPoints != 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                  'نقاط المهارة +${choice.skillPoints} • مجموعك الآن: ${_e.skillPoints} • مستواك: ${_e.careerTier}',
                   style: TextStyle(color: Colors.grey.shade700)),
             ],
             if (choice.cash != 0) ...[

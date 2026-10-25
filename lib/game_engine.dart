@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'data/arcs.dart';
+import 'data/career_events.dart';
 import 'data/countries.dart';
 import 'data/deep_events.dart';
 import 'data/events.dart';
@@ -37,6 +38,43 @@ class GameEngine {
   int balance = 0;
   String? jobTitle;
   int jobSalary = 0;
+
+  /// نقاط مهارة مهنية تُجمع سنويا أثناء العمل وتمنحها بعض القرارات.
+  /// تفتح مستويات مهنية ترفع الراتب فعليا، لا مجرد سمة.
+  int skillPoints = 0;
+
+  /// المستوى المهني من نقاط المهارة: مبتدئ، محترف، خبير، قائد.
+  /// القائد يشترط سمعة 40 على الأقل: الخبرة وحدها لا تكفي لقيادة الناس،
+  /// وقد تفقد المنصب إن سقطت سمعتك — هذا هو الواقع الفوضوي.
+  int get careerTierIndex {
+    if (skillPoints >= 70 && stats.reputation >= 40) return 3;
+    if (skillPoints >= 35) return 2;
+    if (skillPoints >= 12) return 1;
+    return 0;
+  }
+
+  String get careerTier =>
+      const ['مبتدئ', 'محترف', 'خبير', 'قائد'][careerTierIndex];
+
+  double get careerMultiplier =>
+      const [1.0, 1.25, 1.6, 2.1][careerTierIndex];
+
+  /// الراتب الفعلي بعد مضاعف المستوى المهني.
+  int get effectiveSalary => (jobSalary * careerMultiplier).round();
+
+  /// نقاط المستوى التالي، أو null إن بلغت القمة.
+  int? get nextTierPoints {
+    switch (careerTierIndex) {
+      case 0:
+        return 12;
+      case 1:
+        return 35;
+      case 2:
+        return 70;
+      default:
+        return null;
+    }
+  }
   int childrenCount = 0;
   String? ambition;
   final Set<String> achievements = {};
@@ -135,6 +173,7 @@ class GameEngine {
     balance = startBalance;
     jobTitle = null;
     jobSalary = 0;
+    skillPoints = 0;
     childrenCount = 0;
     ambition = null;
     achievements.clear();
@@ -152,6 +191,7 @@ class GameEngine {
         ...deepEvents,
         ...relationshipEvents,
         ...arcStarters,
+        ...careerEvents,
       ];
 
   LifeEvent _findEvent(String id) {
@@ -232,6 +272,7 @@ class GameEngine {
     }
     final hadParent = traits.contains('parent');
     stats.apply(choice.effect);
+    skillPoints += choice.skillPoints;
     if (choice.relId != null) {
       relationships[choice.relId]?.change(choice.relDelta);
     }
@@ -261,7 +302,10 @@ class GameEngine {
     final years = choice.ageJump;
     var yearly = 0;
     if (traits.contains('employed') && jobSalary > 0) {
-      yearly += jobSalary;
+      // الراتب الفعلي يتضاعف مع المستوى المهني، لا الراتب الأساسي وحده.
+      yearly += effectiveSalary;
+      // نقاط مهارة سنوية: سنة عمل تمنح نقطة أو أكثر حسب مهارتك الحالية.
+      skillPoints += years * (1 + stats.skill ~/ 50);
     }
     var expenses = (15000 * (0.5 + country.economy / 100)).round();
     if (traits.contains('chronic')) {
@@ -376,6 +420,7 @@ class GameEngine {
         'balance': balance,
         'jobTitle': jobTitle,
         'jobSalary': jobSalary,
+        'skillPoints': skillPoints,
         'childrenCount': childrenCount,
         'ambition': ambition,
         'achievements': achievements.toList(),
@@ -401,6 +446,7 @@ class GameEngine {
     engine.balance = (j['balance'] as num).toInt();
     engine.jobTitle = j['jobTitle'] as String?;
     engine.jobSalary = (j['jobSalary'] as num).toInt();
+    engine.skillPoints = (j['skillPoints'] as num?)?.toInt() ?? 0;
     engine.childrenCount = (j['childrenCount'] as num).toInt();
     engine.ambition = j['ambition'] as String?;
     engine.achievements

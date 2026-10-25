@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_8_billion/data/career_events.dart';
 import 'package:life_8_billion/data/relationships.dart';
 import 'package:life_8_billion/game_engine.dart';
 
@@ -102,6 +103,50 @@ void main() {
         engine2.relationships['friend']!.score);
     expect(restored.relationships['friend']!.name,
         engine2.relationships['friend']!.name);
+  });
+
+  test('شجرة المهارات: مستويات تفتحها النقاط وترفع الراتب فعليا', () {
+    final engine = GameEngine()..newLife();
+    engine.traits.add('employed');
+    engine.jobTitle = 'موظف';
+    engine.jobSalary = 30000;
+    engine.stats.reputation = 50;
+
+    expect(engine.careerTier, 'مبتدئ');
+    expect(engine.effectiveSalary, 30000);
+
+    engine.skillPoints = 12;
+    expect(engine.careerTier, 'محترف');
+    expect(engine.effectiveSalary, 37500);
+
+    engine.skillPoints = 35;
+    expect(engine.careerTier, 'خبير');
+    expect(engine.effectiveSalary, 48000);
+
+    // القائد يشترط السمعة: نقاط كافية لكن سمعة منخفضة تبقيك خبيرا.
+    engine.skillPoints = 70;
+    engine.stats.reputation = 20;
+    expect(engine.careerTier, 'خبير');
+    engine.stats.reputation = 50;
+    expect(engine.careerTier, 'قائد');
+    expect(engine.effectiveSalary, 63000);
+
+    // حدث الترقية يمنح نقاطا، والسنوات العاملة تمنح نقاطا سنوية.
+    final engine2 = GameEngine()..newLife();
+    engine2.traits.add('employed');
+    engine2.jobTitle = 'موظف';
+    engine2.jobSalary = 30000;
+    engine2.currentEvent =
+        careerEvents.firstWhere((e) => e.id == 'career_promotion');
+    engine2.applyChoice(engine2.currentEvent!.choices[1]);
+    expect(engine2.skillPoints, greaterThanOrEqualTo(14));
+    expect(engine2.careerTier, 'محترف');
+
+    // الحفظ والاستئناف يحفظان النقاط.
+    final json = engine2.toJson();
+    final restored = GameEngine.fromJson(json);
+    expect(restored.skillPoints, engine2.skillPoints);
+    expect(restored.careerTier, engine2.careerTier);
   });
 
   test('عدة حيوات مختلفة على الأقل في الأسماء أو الدول', () {
