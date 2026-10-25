@@ -416,6 +416,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أشتري بالقرض', 'صار لك بيت، وصار للقرض موعد شهري لا يرحم.',
             const Effect(money: -12, happiness: 14), jump: 3),
+        c('أشتري شقة أصغر بقرض أقصر', 'بيت أصغر باسمك، وقرض ينتهي أسرع، وتسوية ترضي الطموح والجيب معا.',
+            const Effect(money: -4, happiness: 10), jump: 3),
         c('أستأجر وأبقي حرا', 'بقيتَ حرا تنتقل متى شئت، بلا جدران باسمك.',
             const Effect(money: 6, happiness: 6), jump: 3),
       ]),
@@ -424,6 +426,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أطلب إجازة وأعيد ترتيب حياتي', 'عدتَ أنشط وأوضح، وعرفتَ حدودك أخيرا.',
             const Effect(health: 12, happiness: 12, money: -4), jump: 2),
+        c('أخفف ساعات عملي وأرتب أولوياتي', 'لم تتوقف كليا، لكنك أوقفتَ النزيف، وصار تعبك محتملا بعد أن كان خانقا.',
+            const Effect(health: 6, happiness: 4, money: -2), jump: 2),
         c('أستمر وأتجاهل التعب', 'انهار جسدك ذات يوم في المكتب، وكان إنذارا أخيرا.',
             const Effect(health: -16, happiness: -12), jump: 2),
       ]),
@@ -432,6 +436,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أبدأ رياضة وطعاما صحيا', 'تحسنتَ صحتك، وصارت الرياضة صديقك الجديد.',
             const Effect(health: 16, happiness: 6), jump: 3),
+        c('أمشي يوميا وأخفف الضرر', 'لم تتحول حياتك كلها، لكن المشي اليومي أوقف التدهور، وصارت صحتك أفضل دون نظام صارم.',
+            const Effect(health: 6, happiness: 2), jump: 3),
         c('أتجاهل التحذير', 'استمرتَ كما أنت، وصارت صحتك تدفع الثمن ببطء.',
             const Effect(health: -12), add: ['chronic'], jump: 3),
       ]),
@@ -450,6 +456,8 @@ final laterEvents = <LifeEvent>[
       [
         c('أرعاهما بنفسي قدر ما أستطيع', 'كانت سنوات صعبة وجميلة، وكنتَ لهما كما كانا لك.',
             const Effect(happiness: 8, social: 10, health: -4, money: -4), jump: 3),
+        c('أشارك الرعاية مع إخوتي وأقاربي', 'لم تحمل العبء وحدك ولم تغب عنه، فصارت الرعاية مسؤولية عائلة لا فرد، وخفّ ثقلها على الجميع.',
+            const Effect(happiness: 4, social: 8, health: -2, money: -6), jump: 3),
         c('أوظف من يرعاهما وأزورهما كثيرا', 'بقيتَ قريبا، وبقي عملك مستقرا، وكان التوازن ممكنا.',
             const Effect(money: -8, social: 6), jump: 3),
       ]),
