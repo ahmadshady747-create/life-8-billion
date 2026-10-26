@@ -581,4 +581,63 @@ void main() {
     expect(restored.course, isFalse);
     expect(restored.monthlyIncome, 1690);
   });
+
+  test('بدء الحديقة المنزلية يخصم ثمنها ويرفض مشروعا ثانيا وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('garden'), isTrue);
+    expect(s.cash, 3500);
+    expect(s.activeProjectId, 'garden');
+    expect(s.startProject('certificate'), isFalse);
+    expect(s.cash, 3500);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('garden'), isFalse);
+    expect(poor.cash, 1000);
+  });
+
+  test('اكتمال الحديقة بعد 6 أشهر يخفض مصروف الشهر التالي إلى 760', () {
+    final s = LifeManagementState();
+    expect(s.startProject('garden'), isTrue);
+    MonthReport? sixth;
+    for (var i = 0; i < 6; i++) {
+      sixth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('garden'));
+    expect(sixth!.expenses, 860);
+    expect(sixth.lines.any((l) => l.contains('حديقة منزلية')), isTrue);
+    final seventh = s.advanceMonth();
+    expect(seventh.expenses, 760);
+  });
+
+  test('الحديقة المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('garden'), isTrue);
+    for (var i = 0; i < 6; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('garden'), isFalse);
+  });
+
+  test('حفظ واسترجاع الحديقة النشطة يكملها بعد 4 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('garden'), isTrue);
+    s.advanceMonth();
+    s.advanceMonth();
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'garden');
+    expect(restored.activeProjectMonths, 2);
+    for (var i = 0; i < 4; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('garden'));
+    expect(restored.advanceMonth().expenses, 760);
+  });
+
+  test('حالة قديمة بلا قائمة مشاريع مكتملة لا تخفض مصروفها', () {
+    final old = LifeManagementState().toJson()..remove('completedProjectIds');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.completedProjectIds, isEmpty);
+    expect(restored.monthlyExpenses, 860);
+    expect(restored.startProject('garden'), isTrue);
+  });
 }

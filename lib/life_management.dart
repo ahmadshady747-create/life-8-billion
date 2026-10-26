@@ -43,6 +43,11 @@
 ///   يخصم 1 من تغيّر الصحة (سهر وإرهاق اجتماعي)، فيجمع بين
 ///   ثمن مالي وثمن صحي صغير، ولا يكون مجانا أبدا، ويمكن جمعه
 ///   مع العضوية والتعافي فيجمع أثمانها كلها.
+/// - مشروع الحديقة المنزلية (1500، 6 أشهر): ثمن مقدّم متوسط،
+///   ومقابله مصروف شهري أقل بـ 100 دائما من الشهر التالي للاكتمال،
+///   لا في شهر الاكتمال نفسه، على غرار البيت الصغير لكن بثمن
+///   ومدة أقل وأثر أصغر، فيجمع اللاعب بينهما إن أراد خفضا أكبر
+///   للمصروف، ولا يلغي أي منهما الآخر.
 /// - الدورة المهنية الشهرية خيار إداري شهري (مُطفأة افتراضا):
 ///   دخل -350 في الشهر، مقابل مهارة +2 في الشهر نفسه، لكنها
 ///   تخصم 1 من تغيّر الصحة (جهد دراسي إضافي)، فتسريع المهارة
@@ -177,6 +182,14 @@ class LifeManagementState {
       cost: 12000,
       effect: 'مصروف شهري -200 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'garden',
+      name: 'حديقة منزلية',
+      description: 'زراعة خضروات في البيت تقلل مصروف الطعام الشهري.',
+      durationMonths: 6,
+      cost: 1500,
+      effect: 'مصروف شهري -100 دائما من الشهر التالي للاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -279,7 +292,8 @@ class LifeManagementState {
   int get monthlyExpenses =>
       300 +
       (money['housing']! + money['food']! + money['leisure']!) * 8 -
-      (completedProjectIds.contains('home') ? 200 : 0);
+      (completedProjectIds.contains('home') ? 200 : 0) -
+      (completedProjectIds.contains('garden') ? 100 : 0);
 
   int get monthlySavingsDeposit => monthlyIncome * money['savings']! ~/ 100;
 
@@ -402,6 +416,10 @@ class LifeManagementState {
           case 'home':
             projectLine =
                 'اكتمل مشروع ${project.name}: مصروف شهري -200 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'garden':
+            projectLine =
+                'اكتمل مشروع ${project.name}: مصروف شهري -100 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
             break;
         }
       } else {
