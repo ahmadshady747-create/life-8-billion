@@ -701,4 +701,65 @@ void main() {
     expect(restored.volunteer, isFalse);
     expect(restored.monthlyIncome, 1690);
   });
+  test('بدء النادي المجتمعي يخصم ثمنه ويرفض مشروعا ثانيا وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('club'), isTrue);
+    expect(s.cash, 2500);
+    expect(s.activeProjectId, 'club');
+    expect(s.startProject('certificate'), isFalse);
+    expect(s.cash, 2500);
+    final poor = LifeManagementState(cash: 2000);
+    expect(poor.startProject('club'), isFalse);
+    expect(poor.cash, 2000);
+  });
+  test('اكتمال النادي بعد 9 أشهر يرفع العلاقات 10 والصحة 5 معا', () {
+    final s = LifeManagementState();
+    expect(s.startProject('club'), isTrue);
+    MonthReport? ninth;
+    for (var i = 0; i < 9; i++) {
+      ninth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('club'));
+    expect(ninth!.lines.any((l) => l.contains('نادٍ مجتمعي')), isTrue);
+    expect(s.relationships, 60);
+    expect(s.health, 80);
+    expect(s.cash, 7191);
+    expect(s.months, 9);
+  });
+  test('النادي المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('club'), isTrue);
+    for (var i = 0; i < 9; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('club'), isFalse);
+  });
+  test('حفظ واسترجاع النادي النشط يكمله بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('club'), isTrue);
+    for (var i = 0; i < 4; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'club');
+    expect(restored.activeProjectMonths, 4);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('club'));
+    expect(restored.relationships, 60);
+    expect(restored.health, 80);
+  });
+  test('توافق النادي مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('club'), isTrue);
+    expect(restored.cash, 2500);
+  });
 }
