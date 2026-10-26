@@ -29,6 +29,10 @@
 ///   إلى تغيّر الصحة و2 إلى تغيّر العلاقات في الشهر نفسه، فالتعافي
 ///   يُشترى بمال مفقود، والاختيار بين الإرهاق والتعافي والوسط
 ///   هو قرار إداري شهري لا حل واحد دائم.
+/// - مشروع البيت الصغير (12000، 18 شهرا): ثمن كبير مقدّم لا يقدر
+///   عليه النقد الابتدائي، فيحتاج ادخارا أولا، ومقابله مصروف شهري
+///   أقل بـ 200 دائما من الشهر التالي للاكتمال، لا في شهر الاكتمال
+///   نفسه، فالاستثمار طويل الأجل يخفف العبء الشهري ولا يلغي ثمنه.
 class MonthReport {
   final int month;
   final int income;
@@ -143,6 +147,14 @@ class LifeManagementState {
       cost: 2000,
       effect: 'علاقات +15 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'home',
+      name: 'بيت صغير',
+      description: 'شراء بيت صغير بعد ادخار طويل، يخفف عبء السكن الشهري.',
+      durationMonths: 18,
+      cost: 12000,
+      effect: 'مصروف شهري -200 دائما من الشهر التالي للاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -234,7 +246,9 @@ class LifeManagementState {
   }
 
   int get monthlyExpenses =>
-      300 + (money['housing']! + money['food']! + money['leisure']!) * 8;
+      300 +
+      (money['housing']! + money['food']! + money['leisure']!) * 8 -
+      (completedProjectIds.contains('home') ? 200 : 0);
 
   int get monthlySavingsDeposit => monthlyIncome * money['savings']! ~/ 100;
 
@@ -339,6 +353,10 @@ class LifeManagementState {
             relationships = _clampScore(relationships + 15);
             projectLine =
                 'اكتمل مشروع ${project.name}: العلاقات +15 (الآن $relationships).';
+            break;
+          case 'home':
+            projectLine =
+                'اكتمل مشروع ${project.name}: مصروف شهري -200 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
             break;
         }
       } else {

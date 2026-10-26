@@ -343,4 +343,61 @@ void main() {
     expect(restored.recovery, isFalse);
     expect(restored.advanceMonth().recoveryCost, 0);
   });
+
+  test('مشروع البيت يبدأ بثمنه ويرفض بلا نقد كاف', () {
+    final poor = LifeManagementState();
+    expect(poor.startProject('home'), isFalse);
+    expect(poor.cash, 5000);
+    final s = LifeManagementState()..cash = 12000;
+    expect(s.startProject('home'), isTrue);
+    expect(s.cash, 0);
+    expect(s.activeProjectId, 'home');
+  });
+
+  test('مشروع البيت يكتمل بعد 18 شهرا ويخفض المصروف من الشهر التالي', () {
+    final s = LifeManagementState()..cash = 12000;
+    expect(s.startProject('home'), isTrue);
+    MonthReport? last;
+    for (var i = 0; i < 18; i++) {
+      last = s.advanceMonth();
+    }
+    expect(s.completedProjectIds.contains('home'), isTrue);
+    expect(last!.expenses, 860);
+    expect(last.lines.any((l) => l.contains('مصروف شهري -200')), isTrue);
+    expect(s.monthlyExpenses, 660);
+    final next = s.advanceMonth();
+    expect(next.expenses, 660);
+  });
+
+  test('مشروع البيت المكتمل لا يُعاد بدؤه', () {
+    final s = LifeManagementState()..cash = 12000;
+    expect(s.startProject('home'), isTrue);
+    for (var i = 0; i < 18; i++) {
+      s.advanceMonth();
+    }
+    s.cash = 12000;
+    expect(s.startProject('home'), isFalse);
+    expect(s.cash, 12000);
+  });
+
+  test('حفظ واسترجاع مشروع البيت النشط يكمله بعد بقية مدته', () {
+    final s = LifeManagementState()..cash = 12000;
+    expect(s.startProject('home'), isTrue);
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'home');
+    for (var i = 0; i < 18; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds.contains('home'), isTrue);
+    expect(restored.monthlyExpenses, 660);
+  });
+
+  test('حالة قديمة بلا قائمة مشاريع مكتملة لا تحصل على خصم البيت', () {
+    final old = LifeManagementState().toJson()
+      ..remove('completedProjectIds');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.completedProjectIds.isEmpty, isTrue);
+    expect(restored.monthlyExpenses, 860);
+  });
 }
