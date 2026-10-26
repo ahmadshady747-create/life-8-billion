@@ -252,6 +252,16 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                   _row('الصحة الآن', '${s.health} / 100'),
                   const Text(
                       'الصحة تتحسن بمجموع وقت الصحة والراحة، وتتراجع إن قلّ عن 25. إهمالها لا يقتلك بخيار واحد، بل يتراكم شهرا بعد شهر.'),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('عضوية نادٍ رياضي هذا الشهر'),
+                      subtitle: const Text(
+                          'دخل -250 كل شهر، لكن الصحة +4 في الشهر نفسه. صحة تُشترى بمال متكرر، وهي أرخص من إجازة التعافي لكنها لا تريح علاقاتك.'),
+                      value: s.gym,
+                      onChanged: (v) => setState(() => s.gym = v),
+                    ),
+                  ),
                 ]),
                 _panel([
                   const Text('المهارة',

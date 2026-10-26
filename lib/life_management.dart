@@ -33,6 +33,11 @@
 ///   عليه النقد الابتدائي، فيحتاج ادخارا أولا، ومقابله مصروف شهري
 ///   أقل بـ 200 دائما من الشهر التالي للاكتمال، لا في شهر الاكتمال
 ///   نفسه، فالاستثمار طويل الأجل يخفف العبء الشهري ولا يلغي ثمنه.
+/// - عضوية النادي الرياضي خيار إداري شهري (مُطفأة افتراضا): دخل
+///   -250 في الشهر، مقابل صحة +4 في الشهر نفسه، بلا أثر على
+///   العلاقات، فالصحة تُشترى بمال شهري متكرر لا بدفعة واحدة،
+///   وهي أرخص من إجازة التعافي لكنها لا تعطي راحة العلاقات،
+///   فالاختيار بينهما وبين الجمع بينهما قرار تكلفة لا حل واحد.
 class MonthReport {
   final int month;
   final int income;
@@ -41,6 +46,7 @@ class MonthReport {
   final int debtCharge;
   final int overtimeIncome;
   final int recoveryCost;
+  final int gymCost;
   final int cashDelta;
   final int skillDelta;
   final int healthDelta;
@@ -55,6 +61,7 @@ class MonthReport {
     this.debtCharge = 0,
     this.overtimeIncome = 0,
     this.recoveryCost = 0,
+    this.gymCost = 0,
     required this.cashDelta,
     required this.skillDelta,
     required this.healthDelta,
@@ -167,6 +174,7 @@ class LifeManagementState {
   int extraMonthlyIncome;
   bool overtime;
   bool recovery;
+  bool gym;
   String? activeProjectId;
   int activeProjectMonths;
   final Set<String> completedProjectIds;
@@ -184,6 +192,7 @@ class LifeManagementState {
     this.extraMonthlyIncome = 0,
     this.overtime = false,
     this.recovery = false,
+    this.gym = false,
     this.activeProjectId,
     this.activeProjectMonths = 0,
     Set<String>? completedProjectIds,
@@ -201,7 +210,8 @@ class LifeManagementState {
       skill * 3 +
       extraMonthlyIncome +
       (overtime ? 500 : 0) -
-      (recovery ? 400 : 0);
+      (recovery ? 400 : 0) -
+      (gym ? 250 : 0);
 
   /// يشغّل العمل الإضافي للشهر التالي أو يطفئه. لا يغيّر الماضي،
   /// بل يظهر أثره في أول شهر يتقدم والخيار مشغّل. تشغيله يطفئ
@@ -318,6 +328,10 @@ class LifeManagementState {
       healthDelta += 6;
       relDelta += 2;
     }
+    final gymCost = gym ? 250 : 0;
+    if (gym) {
+      healthDelta += 4;
+    }
 
     cash += cashDelta;
     savings += deposit;
@@ -373,6 +387,8 @@ class LifeManagementState {
         'عمل إضافي هذا الشهر: دخل +500، لكن الصحة -5 والعلاقات -3 من الإرهاق.',
       if (recovery)
         'إجازة تعافٍ هذا الشهر: دخل -400، لكن الصحة +6 والعلاقات +2 من الراحة.',
+      if (gym)
+        'عضوية نادٍ رياضي هذا الشهر: دخل -250، لكن الصحة +4 من التمرين المنتظم.',
       'صافي النقد هذا الشهر: ${cashDelta >= 0 ? '+' : ''}$cashDelta (النقد الآن $cash).',
       'المهارة ${skillDelta >= 0 ? '+' : ''}$skillDelta (الآن $skill)، '
           'الصحة ${healthDelta >= 0 ? '+' : ''}$healthDelta (الآن $health)، '
@@ -401,6 +417,7 @@ class LifeManagementState {
       debtCharge: debtCharge,
       overtimeIncome: overtimeIncome,
       recoveryCost: recoveryCost,
+      gymCost: gymCost,
       cashDelta: cashDelta,
       skillDelta: skillDelta,
       healthDelta: healthDelta,
@@ -420,6 +437,7 @@ class LifeManagementState {
         'extraMonthlyIncome': extraMonthlyIncome,
         'overtime': overtime,
         'recovery': recovery,
+        'gym': gym,
         'activeProjectId': activeProjectId,
         'activeProjectMonths': activeProjectMonths,
         'completedProjectIds': completedProjectIds.toList(),
@@ -448,6 +466,7 @@ class LifeManagementState {
       extraMonthlyIncome: (j['extraMonthlyIncome'] as num?)?.toInt() ?? 0,
       overtime: j['overtime'] as bool? ?? false,
       recovery: j['recovery'] as bool? ?? false,
+      gym: j['gym'] as bool? ?? false,
       activeProjectId: j['activeProjectId'] as String?,
       activeProjectMonths: (j['activeProjectMonths'] as num?)?.toInt() ?? 0,
       completedProjectIds: j['completedProjectIds'] is List

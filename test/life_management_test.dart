@@ -400,4 +400,61 @@ void main() {
     expect(restored.completedProjectIds.isEmpty, isTrue);
     expect(restored.monthlyExpenses, 860);
   });
+
+  test('شهر بعضوية نادٍ رياضي بأرقام كاملة', () {
+    final s = LifeManagementState()..gym = true;
+    expect(s.monthlyIncome, 1440);
+    final r = s.advanceMonth();
+    expect(r.income, 1440);
+    expect(r.gymCost, 250);
+    expect(r.expenses, 860);
+    expect(r.savingsDeposit, 288);
+    expect(r.cashDelta, 292);
+    expect(s.cash, 5292);
+    expect(r.healthDelta, 4);
+    expect(s.health, 79);
+    expect(s.relationships, 50);
+    expect(r.lines.any((l) => l.contains('عضوية نادٍ رياضي')), isTrue);
+  });
+
+  test('إطفاء العضوية يعيد الشهر إلى الأساس', () {
+    final s = LifeManagementState()..gym = true;
+    s.gym = false;
+    expect(s.monthlyIncome, 1690);
+    final r = s.advanceMonth();
+    expect(r.gymCost, 0);
+    expect(r.healthDelta, 0);
+    expect(s.cash, 5492);
+  });
+
+  test('العضوية مع إجازة التعافي تجمع التكلفة والصحة', () {
+    final s = LifeManagementState()
+      ..gym = true
+      ..setRecovery(true);
+    expect(s.monthlyIncome, 1040);
+    final r = s.advanceMonth();
+    expect(r.healthDelta, 10);
+    expect(s.health, 85);
+    expect(r.relationshipsDelta, 2);
+    expect(s.relationships, 52);
+    expect(r.cashDelta, -28);
+    expect(s.cash, 4972);
+  });
+
+  test('حفظ واسترجاع العضوية يحفظ أثرها في الشهر التالي', () {
+    final s = LifeManagementState()..gym = true;
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.gym, isTrue);
+    final r = restored.advanceMonth();
+    expect(r.gymCost, 250);
+    expect(restored.health, 79);
+  });
+
+  test('حالة قديمة بلا حقل عضوية تبقى العضوية مطفأة فيها', () {
+    final old = LifeManagementState().toJson()..remove('gym');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.gym, isFalse);
+    expect(restored.monthlyIncome, 1690);
+  });
 }
