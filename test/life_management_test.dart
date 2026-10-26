@@ -457,4 +457,65 @@ void main() {
     expect(restored.gym, isFalse);
     expect(restored.monthlyIncome, 1690);
   });
+
+  test('شهر لقاء اجتماعي كامل بأرقام دقيقة', () {
+    final s = LifeManagementState()..social = true;
+    expect(s.monthlyIncome, 1390);
+    final r = s.advanceMonth();
+    expect(r.socialCost, 300);
+    expect(r.income, 1390);
+    expect(r.expenses, 860);
+    expect(r.savingsDeposit, 278);
+    expect(r.cashDelta, 252);
+    expect(s.cash, 5252);
+    expect(r.healthDelta, -1);
+    expect(s.health, 74);
+    expect(r.relationshipsDelta, 5);
+    expect(s.relationships, 55);
+  });
+
+  test('إطفاء اللقاء الاجتماعي يعيد الأساس', () {
+    final s = LifeManagementState()..social = true;
+    s.social = false;
+    expect(s.monthlyIncome, 1690);
+    final r = s.advanceMonth();
+    expect(r.socialCost, 0);
+    expect(s.cash, 5492);
+    expect(s.health, 75);
+    expect(s.relationships, 50);
+  });
+
+  test('لقاء اجتماعي مع عضوية يجمع التكلفة والصحة والعلاقات', () {
+    final s = LifeManagementState()
+      ..social = true
+      ..gym = true;
+    expect(s.monthlyIncome, 1140);
+    final r = s.advanceMonth();
+    expect(r.socialCost, 300);
+    expect(r.gymCost, 250);
+    expect(r.cashDelta, 52);
+    expect(s.cash, 5052);
+    expect(r.healthDelta, 3);
+    expect(s.health, 78);
+    expect(r.relationshipsDelta, 5);
+    expect(s.relationships, 55);
+  });
+
+  test('حفظ واسترجاع اللقاء الاجتماعي يحفظ أثره في الشهر التالي', () {
+    final s = LifeManagementState()..social = true;
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.social, isTrue);
+    final r = restored.advanceMonth();
+    expect(r.socialCost, 300);
+    expect(restored.relationships, 55);
+    expect(restored.health, 74);
+  });
+
+  test('حالة قديمة بلا حقل لقاء اجتماعي تبقى مطفأة فيها', () {
+    final old = LifeManagementState().toJson()..remove('social');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.social, isFalse);
+    expect(restored.monthlyIncome, 1690);
+  });
 }

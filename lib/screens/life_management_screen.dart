@@ -278,6 +278,16 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                   _row('العلاقات الآن', '${s.relationships} / 100'),
                   const Text(
                       'وقت العلاقات فوق 15 يحسّن علاقاتك، وتحته يضعفها. العلاقات هنا مورد إداري لا حدثا عابرا.'),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('لقاء اجتماعي هذا الشهر'),
+                      subtitle: const Text(
+                          'دخل -300 كل شهر، لكن العلاقات +5 في الشهر نفسه، والصحة -1 من السهر والإرهاق. تواصل يُشترى بمال وصحة قليلة، لا مجانا أبدا.'),
+                      value: s.social,
+                      onChanged: (v) => setState(() => s.social = v),
+                    ),
+                  ),
                 ]),
                 _panel([
                   const Text('مشاريع',
