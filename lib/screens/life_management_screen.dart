@@ -327,6 +327,16 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                   _row('المهارة الآن', '${s.skill} / 100'),
                   const Text(
                       'الدراسة والتعلم يرفعان المهارة، والمهارة الأعلى ترفع أجرك الشهري فعلا (كل نقطة مهارة = +3 دخل). ترك التعلم تماما يُنقص المهارة نقطة شهريا.'),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('دورة مهنية هذا الشهر'),
+                      subtitle: const Text(
+                          'دخل -350 كل شهر، لكن المهارة +2 في الشهر نفسه، والصحة -1 من الجهد الدراسي الإضافي. تسريع مهارة يُشترى بمال وجهد، لا مجانا أبدا.'),
+                      value: s.course,
+                      onChanged: (v) => setState(() => s.course = v),
+                    ),
+                  ),
                 ]),
                 _panel([
                   const Text('العلاقات',

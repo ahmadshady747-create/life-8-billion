@@ -518,4 +518,67 @@ void main() {
     expect(restored.social, isFalse);
     expect(restored.monthlyIncome, 1690);
   });
+
+  test('شهر دورة مهنية كامل بأرقام دقيقة', () {
+    final s = LifeManagementState()..course = true;
+    expect(s.monthlyIncome, 1340);
+    final r = s.advanceMonth();
+    expect(r.courseCost, 350);
+    expect(r.income, 1340);
+    expect(r.expenses, 860);
+    expect(r.savingsDeposit, 268);
+    expect(r.cashDelta, 212);
+    expect(s.cash, 5212);
+    expect(r.skillDelta, 5);
+    expect(s.skill, 35);
+    expect(r.healthDelta, -1);
+    expect(s.health, 74);
+    expect(r.relationshipsDelta, 0);
+    expect(s.relationships, 50);
+  });
+
+  test('إطفاء الدورة المهنية يعيد الأساس', () {
+    final s = LifeManagementState()..course = true;
+    s.course = false;
+    expect(s.monthlyIncome, 1690);
+    final r = s.advanceMonth();
+    expect(r.courseCost, 0);
+    expect(s.cash, 5492);
+    expect(s.skill, 33);
+    expect(s.health, 75);
+  });
+
+  test('دورة مهنية مع لقاء اجتماعي تجمع التكلفة والمهارة والعلاقات', () {
+    final s = LifeManagementState()
+      ..course = true
+      ..social = true;
+    expect(s.monthlyIncome, 1040);
+    final r = s.advanceMonth();
+    expect(r.courseCost, 350);
+    expect(r.socialCost, 300);
+    expect(r.skillDelta, 5);
+    expect(s.skill, 35);
+    expect(r.healthDelta, -2);
+    expect(s.health, 73);
+    expect(r.relationshipsDelta, 5);
+    expect(s.relationships, 55);
+  });
+
+  test('حفظ واسترجاع الدورة المهنية يحفظ أثرها في الشهر التالي', () {
+    final s = LifeManagementState()..course = true;
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.course, isTrue);
+    final r = restored.advanceMonth();
+    expect(r.courseCost, 350);
+    expect(restored.skill, 35);
+    expect(restored.health, 74);
+  });
+
+  test('حالة قديمة بلا حقل دورة مهنية تبقى مطفأة فيها', () {
+    final old = LifeManagementState().toJson()..remove('course');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.course, isFalse);
+    expect(restored.monthlyIncome, 1690);
+  });
 }
