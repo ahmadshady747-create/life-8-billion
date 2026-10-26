@@ -160,7 +160,7 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       const Padding(
                         padding: EdgeInsets.only(top: 8),
                         child: Text(
-                          'النقد سالب: أنت مدين. راجع ميزانية المال قبل الشهر التالي.',
+                          'النقد سالب: أنت مدين، وفائدة 10% ستُضاف في الشهر التالي. راجع ميزانية المال قبل التقدم.',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.red),
                         ),
@@ -180,6 +180,9 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                           fontSize: 20, fontWeight: FontWeight.bold)),
                   _row('الدخل الشهري المتوقع', '${s.monthlyIncome}'),
                   _row('المصروف الشهري المتوقع', '${s.monthlyExpenses}'),
+                  if (s.cash < 0)
+                    _row('فائدة الدين الشهرية المتوقعة (10%)',
+                        '${(-s.cash) * 10 ~/ 100}'),
                   _row('الادخار الشهري المتوقع', '${s.monthlySavingsDeposit}'),
                   const SizedBox(height: 12),
                   const Text('تقرير الشهر الأخير:',

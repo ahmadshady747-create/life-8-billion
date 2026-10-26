@@ -152,4 +152,40 @@ void main() {
     expect(old.activeProjectId, isNull);
     expect(old.extraMonthlyIncome, 0);
   });
+
+  test('الدين السالب يفرض فائدة 10% تُضاف إلى مصروف الشهر', () {
+    final s = LifeManagementState(cash: -1000);
+    final report = s.advanceMonth();
+    expect(report.debtCharge, 100);
+    expect(report.expenses, 860 + 100);
+    expect(report.cashDelta, 1690 - 960 - 338);
+    expect(s.cash, -608);
+    expect(report.lines.any((l) => l.contains('فائدة دين هذا الشهر')),
+        isTrue);
+  });
+
+  test('لا فائدة دين عندما يكون النقد غير سالب', () {
+    final s = LifeManagementState();
+    final report = s.advanceMonth();
+    expect(report.debtCharge, 0);
+    expect(report.expenses, 860);
+  });
+
+  test('دين صغير أقل من 10 لا يفرض فائدة (قسمة صحيحة)', () {
+    final s = LifeManagementState(cash: -5);
+    final report = s.advanceMonth();
+    expect(report.debtCharge, 0);
+    expect(report.lines.any((l) => l.contains('فائدة دين هذا الشهر')),
+        isFalse);
+  });
+
+  test('حفظ واسترجاع النقد السالب يحفظ الدين وفائدته في الشهر التالي', () {
+    final s = LifeManagementState(cash: -1000);
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.cash, -1000);
+    final report = restored.advanceMonth();
+    expect(report.debtCharge, 100);
+    expect(restored.cash, -608);
+  });
 }

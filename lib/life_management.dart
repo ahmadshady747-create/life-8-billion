@@ -17,11 +17,15 @@
 /// - الصحة تتحسن بوقت الصحة والراحة معا، وتتراجع إن قلّ مجموعهما.
 /// - العلاقات تتحسن بوقت العلاقات، وتتراجع إن قلّ عن 15.
 /// - العمر يزيد سنة كل 12 شهرا، بدءا من 18 (إدارة حياة البالغين).
+/// - الدين له ثمن: إن كان النقد سالبا عند بدء الشهر، تُضاف فائدة
+///   10% من الدين إلى مصروف ذلك الشهر، فالدين يتفاقم إن أُهمل،
+///   والخروج منه يحتاج دخلا أعلى أو مصروفا أقل، لا مجرد الانتظار.
 class MonthReport {
   final int month;
   final int income;
   final int expenses;
   final int savingsDeposit;
+  final int debtCharge;
   final int cashDelta;
   final int skillDelta;
   final int healthDelta;
@@ -33,6 +37,7 @@ class MonthReport {
     required this.income,
     required this.expenses,
     required this.savingsDeposit,
+    this.debtCharge = 0,
     required this.cashDelta,
     required this.skillDelta,
     required this.healthDelta,
@@ -234,7 +239,9 @@ class LifeManagementState {
 
   MonthReport advanceMonth() {
     final income = monthlyIncome;
-    final expenses = monthlyExpenses;
+    // فائدة الدين تُحسب من النقد عند بدء الشهر، قبل أي تغيير فيه.
+    final debtCharge = cash < 0 ? (-cash) * 10 ~/ 100 : 0;
+    final expenses = monthlyExpenses + debtCharge;
     final deposit = monthlySavingsDeposit;
     final cashDelta = income - expenses - deposit;
     var skillDelta = time['study']! ~/ 10 + money['learning']! ~/ 10;
@@ -282,13 +289,15 @@ class LifeManagementState {
 
     final lines = <String>[
       'دخل الشهر: $income — مصروف الشهر: $expenses — ادخار: $deposit.',
+      if (debtCharge > 0)
+        'فائدة دين هذا الشهر: $debtCharge (10% من دينك عند بدء الشهر).',
       'صافي النقد هذا الشهر: ${cashDelta >= 0 ? '+' : ''}$cashDelta (النقد الآن $cash).',
       'المهارة ${skillDelta >= 0 ? '+' : ''}$skillDelta (الآن $skill)، '
           'الصحة ${healthDelta >= 0 ? '+' : ''}$healthDelta (الآن $health)، '
           'العلاقات ${relDelta >= 0 ? '+' : ''}$relDelta (الآن $relationships).',
     ];
     if (cash < 0) {
-      lines.add('تحذير: النقد سالب — أنت مدين، وأي شهر سيئ آخر يهدد حياتك المالية.');
+      lines.add('تحذير: النقد سالب — أنت مدين، وفائدة 10% شهريا تزيد دينك إن لم تخرج منه.');
     }
     if (healthDelta < 0) {
       lines.add('إهمال الصحة بدأ يظهر: زد وقت الصحة أو الراحة قبل أن يتراجع أكثر.');
@@ -307,6 +316,7 @@ class LifeManagementState {
       income: income,
       expenses: expenses,
       savingsDeposit: deposit,
+      debtCharge: debtCharge,
       cashDelta: cashDelta,
       skillDelta: skillDelta,
       healthDelta: healthDelta,
