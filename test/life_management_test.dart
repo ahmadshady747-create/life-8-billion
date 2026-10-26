@@ -279,4 +279,68 @@ void main() {
     expect(restored.overtime, isFalse);
     expect(restored.advanceMonth().overtimeIncome, 0);
   });
+
+  test('إجازة التعافي شهر كامل بأرقام دقيقة', () {
+    final s = LifeManagementState();
+    s.setRecovery(true);
+    final report = s.advanceMonth();
+    // دخل 1290 (1690 - 400)، مصروف 860، ادخار 258، صافي 172.
+    expect(report.income, 1290);
+    expect(report.recoveryCost, 400);
+    expect(report.expenses, 860);
+    expect(report.savingsDeposit, 258);
+    expect(report.cashDelta, 172);
+    expect(s.cash, 5172);
+    expect(s.health, 81);
+    expect(s.relationships, 52);
+    expect(s.skill, 33);
+    expect(report.lines.any((l) => l.contains('إجازة تعافٍ هذا الشهر')),
+        isTrue);
+  });
+
+  test('إجازة التعافي والعمل الإضافي لا يجتمعان أبدا', () {
+    final s = LifeManagementState();
+    s.setOvertime(true);
+    s.setRecovery(true);
+    expect(s.recovery, isTrue);
+    expect(s.overtime, isFalse);
+    s.setOvertime(true);
+    expect(s.overtime, isTrue);
+    expect(s.recovery, isFalse);
+    final report = s.advanceMonth();
+    expect(report.overtimeIncome, 500);
+    expect(report.recoveryCost, 0);
+  });
+
+  test('إطفاء إجازة التعافي يعيد الشهر إلى الأساس', () {
+    final s = LifeManagementState();
+    s.setRecovery(true);
+    s.setRecovery(false);
+    final report = s.advanceMonth();
+    expect(report.income, 1690);
+    expect(report.recoveryCost, 0);
+    expect(s.health, 75);
+    expect(s.relationships, 50);
+    expect(report.lines.any((l) => l.contains('إجازة تعافٍ هذا الشهر')),
+        isFalse);
+  });
+
+  test('حفظ واسترجاع إجازة التعافي يحفظ أثرها في الشهر التالي', () {
+    final s = LifeManagementState();
+    s.setRecovery(true);
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.recovery, isTrue);
+    final report = restored.advanceMonth();
+    expect(report.recoveryCost, 400);
+    expect(restored.health, 81);
+    expect(restored.relationships, 52);
+  });
+
+  test('توافق مع حالة قديمة بلا حقل إجازة التعافي (مُطفأة افتراضا)', () {
+    final old = LifeManagementState().toJson()..remove('recovery');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.recovery, isFalse);
+    expect(restored.advanceMonth().recoveryCost, 0);
+  });
 }

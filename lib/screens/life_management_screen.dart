@@ -221,6 +221,15 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       onChanged: (v) => setState(() => s.setOvertime(v)),
                     ),
                   ),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('إجازة تعافٍ هذا الشهر'),
+                      subtitle: const Text(
+                          'دخل -400، لكن الصحة +6 والعلاقات +2 في الشهر نفسه. التعافي يُشترى بمال مفقود، ولا يجتمع مع العمل الإضافي أبدا.'),
+                      value: s.recovery,
+                      onChanged: (v) => setState(() => s.setRecovery(v)),
+                    ),
+                  ),
                 ]),
                 _panel([
                   const Text('ميزانية المال — المجموع 100 دائما',

@@ -24,6 +24,11 @@
 ///   الشهر، لكنه يخصم 5 من تغيّر الصحة و3 من تغيّر العلاقات في
 ///   الشهر نفسه، فالمال السريع له ثمن في الصحة والعلاقات، ولا
 ///   يكون دائما الخيار الأفضل.
+/// - إجازة التعافي خيار إداري شهري مضاد للعمل الإضافي (مُطفأة
+///   افتراضا، ولا يجتمعان أبدا): دخل -400 في الشهر، لكنها تضيف 6
+///   إلى تغيّر الصحة و2 إلى تغيّر العلاقات في الشهر نفسه، فالتعافي
+///   يُشترى بمال مفقود، والاختيار بين الإرهاق والتعافي والوسط
+///   هو قرار إداري شهري لا حل واحد دائم.
 class MonthReport {
   final int month;
   final int income;
@@ -31,6 +36,7 @@ class MonthReport {
   final int savingsDeposit;
   final int debtCharge;
   final int overtimeIncome;
+  final int recoveryCost;
   final int cashDelta;
   final int skillDelta;
   final int healthDelta;
@@ -44,6 +50,7 @@ class MonthReport {
     required this.savingsDeposit,
     this.debtCharge = 0,
     this.overtimeIncome = 0,
+    this.recoveryCost = 0,
     required this.cashDelta,
     required this.skillDelta,
     required this.healthDelta,
@@ -147,6 +154,7 @@ class LifeManagementState {
   int relationships;
   int extraMonthlyIncome;
   bool overtime;
+  bool recovery;
   String? activeProjectId;
   int activeProjectMonths;
   final Set<String> completedProjectIds;
@@ -163,6 +171,7 @@ class LifeManagementState {
     this.relationships = 50,
     this.extraMonthlyIncome = 0,
     this.overtime = false,
+    this.recovery = false,
     this.activeProjectId,
     this.activeProjectMonths = 0,
     Set<String>? completedProjectIds,
@@ -175,12 +184,27 @@ class LifeManagementState {
             {'housing': 35, 'food': 25, 'savings': 20, 'learning': 10, 'leisure': 10};
 
   int get monthlyIncome =>
-      1000 + time['work']! * 15 + skill * 3 + extraMonthlyIncome + (overtime ? 500 : 0);
+      1000 +
+      time['work']! * 15 +
+      skill * 3 +
+      extraMonthlyIncome +
+      (overtime ? 500 : 0) -
+      (recovery ? 400 : 0);
 
   /// يشغّل العمل الإضافي للشهر التالي أو يطفئه. لا يغيّر الماضي،
-  /// بل يظهر أثره في أول شهر يتقدم والخيار مشغّل.
+  /// بل يظهر أثره في أول شهر يتقدم والخيار مشغّل. تشغيله يطفئ
+  /// إجازة التعافي، فالخياران لا يجتمعان أبدا.
   void setOvertime(bool value) {
     overtime = value;
+    if (value) recovery = false;
+  }
+
+  /// يشغّل إجازة التعافي للشهر التالي أو يطفئها. لا يغيّر الماضي،
+  /// بل يظهر أثره في أول شهر يتقدم والخيار مشغّلا. تشغيلها يطفئ
+  /// العمل الإضافي، فالخياران لا يجتمعان أبدا.
+  void setRecovery(bool value) {
+    recovery = value;
+    if (value) overtime = false;
   }
 
   LifeProjectPlan? get activeProject {
@@ -275,6 +299,11 @@ class LifeManagementState {
       healthDelta -= 5;
       relDelta -= 3;
     }
+    final recoveryCost = recovery ? 400 : 0;
+    if (recovery) {
+      healthDelta += 6;
+      relDelta += 2;
+    }
 
     cash += cashDelta;
     savings += deposit;
@@ -324,6 +353,8 @@ class LifeManagementState {
         'فائدة دين هذا الشهر: $debtCharge (10% من دينك عند بدء الشهر).',
       if (overtime)
         'عمل إضافي هذا الشهر: دخل +500، لكن الصحة -5 والعلاقات -3 من الإرهاق.',
+      if (recovery)
+        'إجازة تعافٍ هذا الشهر: دخل -400، لكن الصحة +6 والعلاقات +2 من الراحة.',
       'صافي النقد هذا الشهر: ${cashDelta >= 0 ? '+' : ''}$cashDelta (النقد الآن $cash).',
       'المهارة ${skillDelta >= 0 ? '+' : ''}$skillDelta (الآن $skill)، '
           'الصحة ${healthDelta >= 0 ? '+' : ''}$healthDelta (الآن $health)، '
@@ -351,6 +382,7 @@ class LifeManagementState {
       savingsDeposit: deposit,
       debtCharge: debtCharge,
       overtimeIncome: overtimeIncome,
+      recoveryCost: recoveryCost,
       cashDelta: cashDelta,
       skillDelta: skillDelta,
       healthDelta: healthDelta,
@@ -369,6 +401,7 @@ class LifeManagementState {
         'relationships': relationships,
         'extraMonthlyIncome': extraMonthlyIncome,
         'overtime': overtime,
+        'recovery': recovery,
         'activeProjectId': activeProjectId,
         'activeProjectMonths': activeProjectMonths,
         'completedProjectIds': completedProjectIds.toList(),
@@ -396,6 +429,7 @@ class LifeManagementState {
       relationships: (j['relationships'] as num?)?.toInt() ?? 50,
       extraMonthlyIncome: (j['extraMonthlyIncome'] as num?)?.toInt() ?? 0,
       overtime: j['overtime'] as bool? ?? false,
+      recovery: j['recovery'] as bool? ?? false,
       activeProjectId: j['activeProjectId'] as String?,
       activeProjectMonths: (j['activeProjectMonths'] as num?)?.toInt() ?? 0,
       completedProjectIds: j['completedProjectIds'] is List
