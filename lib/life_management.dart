@@ -65,6 +65,7 @@ class MonthReport {
   final int gymCost;
   final int socialCost;
   final int courseCost;
+  final int volunteerCost;
   final int cashDelta;
   final int skillDelta;
   final int healthDelta;
@@ -82,6 +83,7 @@ class MonthReport {
     this.gymCost = 0,
     this.socialCost = 0,
     this.courseCost = 0,
+    this.volunteerCost = 0,
     required this.cashDelta,
     required this.skillDelta,
     required this.healthDelta,
@@ -205,6 +207,7 @@ class LifeManagementState {
   bool gym;
   bool social;
   bool course;
+  bool volunteer;
   String? activeProjectId;
   int activeProjectMonths;
   final Set<String> completedProjectIds;
@@ -225,6 +228,7 @@ class LifeManagementState {
     this.gym = false,
     this.social = false,
     this.course = false,
+    this.volunteer = false,
     this.activeProjectId,
     this.activeProjectMonths = 0,
     Set<String>? completedProjectIds,
@@ -245,7 +249,8 @@ class LifeManagementState {
       (recovery ? 400 : 0) -
       (gym ? 250 : 0) -
       (social ? 300 : 0) -
-      (course ? 350 : 0);
+      (course ? 350 : 0) -
+      (volunteer ? 200 : 0);
 
   /// يشغّل العمل الإضافي للشهر التالي أو يطفئه. لا يغيّر الماضي،
   /// بل يظهر أثره في أول شهر يتقدم والخيار مشغّل. تشغيله يطفئ
@@ -377,6 +382,11 @@ class LifeManagementState {
       skillDelta += 2;
       healthDelta -= 1;
     }
+    final volunteerCost = volunteer ? 200 : 0;
+    if (volunteer) {
+      relDelta += 4;
+      healthDelta += 1;
+    }
 
     cash += cashDelta;
     savings += deposit;
@@ -442,6 +452,8 @@ class LifeManagementState {
         'لقاء اجتماعي هذا الشهر: دخل -300، لكن العلاقات +5 من التواصل المنتظم، والصحة -1 من السهر والإرهاق.',
       if (course)
         'دورة مهنية هذا الشهر: دخل -350، لكن المهارة +2 من الدراسة المكثفة، والصحة -1 من الجهد الإضافي.',
+      if (volunteer)
+        'تطوع مجتمعي هذا الشهر: دخل -200، لكن العلاقات +4 من خدمة الآخرين، والصحة +1 من النشاط والمعنى، فهو أرخص من اللقاء وأبطأ علاقات منه لكنه لا يرهقك.',
       'صافي النقد هذا الشهر: ${cashDelta >= 0 ? '+' : ''}$cashDelta (النقد الآن $cash).',
       'المهارة ${skillDelta >= 0 ? '+' : ''}$skillDelta (الآن $skill)، '
           'الصحة ${healthDelta >= 0 ? '+' : ''}$healthDelta (الآن $health)، '
@@ -473,6 +485,7 @@ class LifeManagementState {
       gymCost: gymCost,
       socialCost: socialCost,
       courseCost: courseCost,
+      volunteerCost: volunteerCost,
       cashDelta: cashDelta,
       skillDelta: skillDelta,
       healthDelta: healthDelta,
@@ -495,6 +508,7 @@ class LifeManagementState {
         'gym': gym,
         'social': social,
         'course': course,
+        'volunteer': volunteer,
         'activeProjectId': activeProjectId,
         'activeProjectMonths': activeProjectMonths,
         'completedProjectIds': completedProjectIds.toList(),
@@ -526,6 +540,7 @@ class LifeManagementState {
       gym: j['gym'] as bool? ?? false,
       social: j['social'] as bool? ?? false,
       course: j['course'] as bool? ?? false,
+      volunteer: j['volunteer'] as bool? ?? false,
       activeProjectId: j['activeProjectId'] as String?,
       activeProjectMonths: (j['activeProjectMonths'] as num?)?.toInt() ?? 0,
       completedProjectIds: j['completedProjectIds'] is List

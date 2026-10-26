@@ -355,6 +355,15 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       onChanged: (v) => setState(() => s.social = v),
                     ),
                   ),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('تطوع مجتمعي هذا الشهر'),
+                      subtitle: const Text(
+                          'دخل -200 كل شهر، لكن العلاقات +4 في الشهر نفسه، والصحة +1 من النشاط والمعنى. أرخص من اللقاء وأبطأ علاقات منه، لكنه لا يرهقك بل ينشطك.'),
+                      value: s.volunteer,
+                      onChanged: (v) => setState(() => s.volunteer = v),
+                    ),
+                  ),
                 ]),
                 _panel([
                   const Text('مشاريع',

@@ -640,4 +640,65 @@ void main() {
     expect(restored.monthlyExpenses, 860);
     expect(restored.startProject('garden'), isTrue);
   });
+
+  test('شهر تطوع مجتمعي كامل بأرقام دقيقة', () {
+    final s = LifeManagementState()..volunteer = true;
+    expect(s.monthlyIncome, 1490);
+    final r = s.advanceMonth();
+    expect(r.volunteerCost, 200);
+    expect(r.income, 1490);
+    expect(r.expenses, 860);
+    expect(r.savingsDeposit, 298);
+    expect(r.cashDelta, 332);
+    expect(s.cash, 5332);
+    expect(r.healthDelta, 1);
+    expect(s.health, 76);
+    expect(r.relationshipsDelta, 4);
+    expect(s.relationships, 54);
+  });
+
+  test('إطفاء التطوع المجتمعي يعيد الأساس', () {
+    final s = LifeManagementState()..volunteer = true;
+    s.volunteer = false;
+    expect(s.monthlyIncome, 1690);
+    final r = s.advanceMonth();
+    expect(r.volunteerCost, 0);
+    expect(s.cash, 5492);
+    expect(s.health, 75);
+    expect(s.relationships, 50);
+  });
+
+  test('تطوع مجتمعي مع لقاء اجتماعي يجمع التكلفة والعلاقات والصحة', () {
+    final s = LifeManagementState()
+      ..volunteer = true
+      ..social = true;
+    expect(s.monthlyIncome, 1190);
+    final r = s.advanceMonth();
+    expect(r.volunteerCost, 200);
+    expect(r.socialCost, 300);
+    expect(r.cashDelta, 92);
+    expect(s.cash, 5092);
+    expect(r.healthDelta, 0);
+    expect(s.health, 75);
+    expect(r.relationshipsDelta, 9);
+    expect(s.relationships, 59);
+  });
+
+  test('حفظ واسترجاع التطوع المجتمعي يحفظ أثره في الشهر التالي', () {
+    final s = LifeManagementState()..volunteer = true;
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.volunteer, isTrue);
+    final r = restored.advanceMonth();
+    expect(r.volunteerCost, 200);
+    expect(restored.relationships, 54);
+    expect(restored.health, 76);
+  });
+
+  test('حالة قديمة بلا حقل تطوع مجتمعي تبقى مطفأة فيها', () {
+    final old = LifeManagementState().toJson()..remove('volunteer');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.volunteer, isFalse);
+    expect(restored.monthlyIncome, 1690);
+  });
 }
