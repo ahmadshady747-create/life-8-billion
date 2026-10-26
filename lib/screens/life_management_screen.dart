@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../life_management.dart';
 
@@ -6,6 +9,9 @@ import '../life_management.dart';
 /// ثمانية تبويبات تعرض الموارد الحقيقية، وزر واحد "تقدم شهرا"
 /// ينفذ الشهر ويعرض تقريره، وتبويب المشاريع يبدأ مشروعا واحدا
 /// نشطا بثمن مقدّم ويعرض تقدمه حتى اكتماله.
+/// الحفظ على الجهاز من اللوحة نفسها: كل شهر يتقدم يُحفظ
+/// تلقائيا، وزر "حفظ الإدارة" يحفظ يدويا، وعند فتح اللوحة من
+/// جديد تُستأنف الإدارة المحفوظة إن وُجدت، لا تبدأ من الصفر.
 class LifeManagementScreen extends StatefulWidget {
   const LifeManagementScreen({super.key});
 
@@ -15,8 +21,11 @@ class LifeManagementScreen extends StatefulWidget {
 
 class _LifeManagementScreenState extends State<LifeManagementScreen>
     with SingleTickerProviderStateMixin {
-  final LifeManagementState _state = LifeManagementState();
+  static const _saveKey = 'life_management_v1';
+
+  LifeManagementState _state = LifeManagementState();
   MonthReport? _lastReport;
+  String? _saveStatus;
   late final TabController _tabs;
 
   static const _tabLabels = [
@@ -34,6 +43,37 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: _tabLabels.length, vsync: this);
+    _loadSaved();
+  }
+
+  /// يستأنف الإدارة المحفوظة على الجهاز إن وُجدت. أي حفظ تالف
+  /// يُتجاهل بهدوء وتبدأ إدارة جديدة، فلا يكسر حفظ قديم اللعب.
+  Future<void> _loadSaved() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_saveKey);
+    if (raw == null) return;
+    try {
+      final restored =
+          LifeManagementState.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      if (!mounted) return;
+      setState(() {
+        _state = restored;
+        _saveStatus =
+            'تم استئناف إدارة محفوظة — الشهر ${restored.months}، النقد ${restored.cash}.';
+      });
+    } catch (_) {
+      // حفظ تالف: يُتجاهل وتبدأ إدارة جديدة.
+    }
+  }
+
+  /// يحفظ حالة الإدارة الحالية على الجهاز ويعرض تأكيدا.
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_saveKey, jsonEncode(_state.toJson()));
+    if (!mounted) return;
+    setState(() {
+      _saveStatus = 'تم حفظ الإدارة (الشهر ${_state.months}).';
+    });
   }
 
   @override
@@ -148,6 +188,9 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                         setState(() {
                           _lastReport = s.advanceMonth();
                         });
+                        // كل شهر يتقدم يُحفظ تلقائيا، فلا تضيع
+                        // الإدارة إن أُغلقت اللعبة دون حفظ يدوي.
+                        _save();
                       },
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -156,6 +199,20 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       ),
                       child: const Text('تقدم شهرا ⏭️'),
                     ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: _save,
+                      child: const Text('حفظ الإدارة'),
+                    ),
+                    if (_saveStatus != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          _saveStatus!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.green),
+                        ),
+                      ),
                     if (s.cash < 0)
                       const Padding(
                         padding: EdgeInsets.only(top: 8),
