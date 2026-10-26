@@ -20,12 +20,17 @@
 /// - الدين له ثمن: إن كان النقد سالبا عند بدء الشهر، تُضاف فائدة
 ///   10% من الدين إلى مصروف ذلك الشهر، فالدين يتفاقم إن أُهمل،
 ///   والخروج منه يحتاج دخلا أعلى أو مصروفا أقل، لا مجرد الانتظار.
+/// - العمل الإضافي خيار إداري شهري (مُطفأ افتراضا): دخل +500 في
+///   الشهر، لكنه يخصم 5 من تغيّر الصحة و3 من تغيّر العلاقات في
+///   الشهر نفسه، فالمال السريع له ثمن في الصحة والعلاقات، ولا
+///   يكون دائما الخيار الأفضل.
 class MonthReport {
   final int month;
   final int income;
   final int expenses;
   final int savingsDeposit;
   final int debtCharge;
+  final int overtimeIncome;
   final int cashDelta;
   final int skillDelta;
   final int healthDelta;
@@ -38,6 +43,7 @@ class MonthReport {
     required this.expenses,
     required this.savingsDeposit,
     this.debtCharge = 0,
+    this.overtimeIncome = 0,
     required this.cashDelta,
     required this.skillDelta,
     required this.healthDelta,
@@ -122,6 +128,14 @@ class LifeManagementState {
       cost: 800,
       effect: 'صحة +15 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'book',
+      name: 'كتاب أو مدونة',
+      description: 'كتابة منتظمة توثق خبرتك وتبني جمهورا وعلاقات.',
+      durationMonths: 8,
+      cost: 2000,
+      effect: 'علاقات +15 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -132,6 +146,7 @@ class LifeManagementState {
   int skill;
   int relationships;
   int extraMonthlyIncome;
+  bool overtime;
   String? activeProjectId;
   int activeProjectMonths;
   final Set<String> completedProjectIds;
@@ -147,6 +162,7 @@ class LifeManagementState {
     this.skill = 30,
     this.relationships = 50,
     this.extraMonthlyIncome = 0,
+    this.overtime = false,
     this.activeProjectId,
     this.activeProjectMonths = 0,
     Set<String>? completedProjectIds,
@@ -159,7 +175,13 @@ class LifeManagementState {
             {'housing': 35, 'food': 25, 'savings': 20, 'learning': 10, 'leisure': 10};
 
   int get monthlyIncome =>
-      1000 + time['work']! * 15 + skill * 3 + extraMonthlyIncome;
+      1000 + time['work']! * 15 + skill * 3 + extraMonthlyIncome + (overtime ? 500 : 0);
+
+  /// يشغّل العمل الإضافي للشهر التالي أو يطفئه. لا يغيّر الماضي،
+  /// بل يظهر أثره في أول شهر يتقدم والخيار مشغّل.
+  void setOvertime(bool value) {
+    overtime = value;
+  }
 
   LifeProjectPlan? get activeProject {
     if (activeProjectId == null) return null;
@@ -246,9 +268,13 @@ class LifeManagementState {
     final cashDelta = income - expenses - deposit;
     var skillDelta = time['study']! ~/ 10 + money['learning']! ~/ 10;
     if (time['study'] == 0 && money['learning'] == 0) skillDelta = -1;
-    final healthDelta =
-        (time['health']! + time['rest']! - 25) ~/ 5;
-    final relDelta = (time['relationships']! - 15) ~/ 5;
+    var healthDelta = (time['health']! + time['rest']! - 25) ~/ 5;
+    var relDelta = (time['relationships']! - 15) ~/ 5;
+    final overtimeIncome = overtime ? 500 : 0;
+    if (overtime) {
+      healthDelta -= 5;
+      relDelta -= 3;
+    }
 
     cash += cashDelta;
     savings += deposit;
@@ -280,6 +306,11 @@ class LifeManagementState {
             health = _clampScore(health + 15);
             projectLine = 'اكتمل مشروع ${project.name}: الصحة +15 (الآن $health).';
             break;
+          case 'book':
+            relationships = _clampScore(relationships + 15);
+            projectLine =
+                'اكتمل مشروع ${project.name}: العلاقات +15 (الآن $relationships).';
+            break;
         }
       } else {
         projectLine =
@@ -291,6 +322,8 @@ class LifeManagementState {
       'دخل الشهر: $income — مصروف الشهر: $expenses — ادخار: $deposit.',
       if (debtCharge > 0)
         'فائدة دين هذا الشهر: $debtCharge (10% من دينك عند بدء الشهر).',
+      if (overtime)
+        'عمل إضافي هذا الشهر: دخل +500، لكن الصحة -5 والعلاقات -3 من الإرهاق.',
       'صافي النقد هذا الشهر: ${cashDelta >= 0 ? '+' : ''}$cashDelta (النقد الآن $cash).',
       'المهارة ${skillDelta >= 0 ? '+' : ''}$skillDelta (الآن $skill)، '
           'الصحة ${healthDelta >= 0 ? '+' : ''}$healthDelta (الآن $health)، '
@@ -317,6 +350,7 @@ class LifeManagementState {
       expenses: expenses,
       savingsDeposit: deposit,
       debtCharge: debtCharge,
+      overtimeIncome: overtimeIncome,
       cashDelta: cashDelta,
       skillDelta: skillDelta,
       healthDelta: healthDelta,
@@ -334,6 +368,7 @@ class LifeManagementState {
         'skill': skill,
         'relationships': relationships,
         'extraMonthlyIncome': extraMonthlyIncome,
+        'overtime': overtime,
         'activeProjectId': activeProjectId,
         'activeProjectMonths': activeProjectMonths,
         'completedProjectIds': completedProjectIds.toList(),
@@ -360,6 +395,7 @@ class LifeManagementState {
       skill: (j['skill'] as num?)?.toInt() ?? 30,
       relationships: (j['relationships'] as num?)?.toInt() ?? 50,
       extraMonthlyIncome: (j['extraMonthlyIncome'] as num?)?.toInt() ?? 0,
+      overtime: j['overtime'] as bool? ?? false,
       activeProjectId: j['activeProjectId'] as String?,
       activeProjectMonths: (j['activeProjectMonths'] as num?)?.toInt() ?? 0,
       completedProjectIds: j['completedProjectIds'] is List

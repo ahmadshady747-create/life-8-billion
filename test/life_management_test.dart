@@ -188,4 +188,95 @@ void main() {
     expect(report.debtCharge, 100);
     expect(restored.cash, -608);
   });
+
+  test('مشروع الكتاب يكتمل بعد 8 أشهر ويرفع العلاقات 15 ولا يُعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('book'), isTrue);
+    expect(s.cash, 3000);
+    for (var i = 0; i < 8; i++) {
+      s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('book'));
+    expect(s.relationships, 65);
+    final cashBefore = s.cash;
+    expect(s.startProject('book'), isFalse);
+    expect(s.cash, cashBefore);
+  });
+
+  test('حفظ واسترجاع مشروع الكتاب النشط يكمله بعد بقية مدته', () {
+    final s = LifeManagementState();
+    s.startProject('book');
+    s.advanceMonth();
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'book');
+    expect(restored.activeProjectMonths, 1);
+    for (var i = 0; i < 7; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('book'));
+    expect(restored.relationships, 65);
+  });
+
+  test('العمل الإضافي يرفع الدخل 500 ويخصم صحة وعلاقات في الشهر نفسه', () {
+    final control = LifeManagementState();
+    final controlReport = control.advanceMonth();
+    final s = LifeManagementState();
+    s.setOvertime(true);
+    expect(s.monthlyIncome, controlReport.income + 500);
+    final report = s.advanceMonth();
+    expect(report.overtimeIncome, 500);
+    expect(report.income, 2190);
+    expect(report.expenses, 860);
+    expect(report.savingsDeposit, 438);
+    expect(report.cashDelta, 892);
+    expect(s.cash, 5892);
+    expect(s.health, 70);
+    expect(s.relationships, 47);
+    expect(report.skillDelta, controlReport.skillDelta);
+    expect(report.lines.any((l) => l.contains('عمل إضافي هذا الشهر')),
+        isTrue);
+  });
+
+  test('إطفاء العمل الإضافي يعيد الدخل والصحة والعلاقات إلى الأساس', () {
+    final s = LifeManagementState();
+    s.setOvertime(true);
+    s.setOvertime(false);
+    final report = s.advanceMonth();
+    expect(report.overtimeIncome, 0);
+    expect(report.income, 1690);
+    expect(s.health, 75);
+    expect(s.relationships, 50);
+    expect(report.lines.any((l) => l.contains('عمل إضافي هذا الشهر')),
+        isFalse);
+  });
+
+  test('العمل الإضافي لا يرفع الدخل في الأشهر السابقة لتشغيله', () {
+    final s = LifeManagementState();
+    final first = s.advanceMonth();
+    expect(first.income, 1690);
+    s.setOvertime(true);
+    final second = s.advanceMonth();
+    // المهارة صارت 33 بعد الشهر الأول، فالدخل 1000 + 600 + 99 + 500.
+    expect(second.income, 2199);
+  });
+
+  test('حفظ واسترجاع العمل الإضافي يحفظ أثره في الشهر التالي', () {
+    final s = LifeManagementState();
+    s.setOvertime(true);
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.overtime, isTrue);
+    final report = restored.advanceMonth();
+    expect(report.overtimeIncome, 500);
+    expect(restored.health, 70);
+    expect(restored.relationships, 47);
+  });
+
+  test('توافق مع حالة قديمة بلا حقل العمل الإضافي (مُطفأ افتراضا)', () {
+    final old = LifeManagementState().toJson()..remove('overtime');
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.overtime, isFalse);
+    expect(restored.advanceMonth().overtimeIncome, 0);
+  });
 }

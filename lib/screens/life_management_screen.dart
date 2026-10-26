@@ -211,6 +211,16 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       s.time[key]!,
                       (v) => s.setTimeBucket(key, v),
                     ),
+                  const SizedBox(height: 8),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('عمل إضافي هذا الشهر'),
+                      subtitle: const Text(
+                          'دخل +500، لكن الصحة -5 والعلاقات -3 في الشهر نفسه. المال السريع له ثمن، فلا يصلح دائما.'),
+                      value: s.overtime,
+                      onChanged: (v) => setState(() => s.setOvertime(v)),
+                    ),
+                  ),
                 ]),
                 _panel([
                   const Text('ميزانية المال — المجموع 100 دائما',
