@@ -1015,4 +1015,65 @@ void main() {
     expect(restored.startProject('coop'), isTrue);
     expect(restored.cash, 2800);
   });
+  test('بدء تدريب الإسعاف يخصم 2600 ويرفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('first_aid'), isTrue);
+    expect(s.cash, 2400);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2400);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('first_aid'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال تدريب الإسعاف بعد 6 أشهر يرفع المهارة 10 والصحة 6', () {
+    final s = LifeManagementState();
+    expect(s.startProject('first_aid'), isTrue);
+    MonthReport? sixth;
+    for (var i = 0; i < 6; i++) {
+      sixth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('first_aid'));
+    expect(sixth!.lines.any((l) => l.contains('تدريب إسعاف ووقاية')), isTrue);
+    expect(s.skill, 58);
+    expect(s.health, 81);
+    expect(s.relationships, 50);
+    expect(s.cash, 5462);
+    expect(s.months, 6);
+  });
+  test('تدريب الإسعاف المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('first_aid'), isTrue);
+    for (var i = 0; i < 6; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('first_aid'), isFalse);
+  });
+  test('حفظ واسترجاع تدريب الإسعاف النشط يكمله بعد 4 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('first_aid'), isTrue);
+    for (var i = 0; i < 2; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'first_aid');
+    expect(restored.activeProjectMonths, 2);
+    for (var i = 0; i < 4; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('first_aid'));
+    expect(restored.skill, 58);
+    expect(restored.health, 81);
+  });
+  test('توافق تدريب الإسعاف مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('first_aid'), isTrue);
+    expect(restored.cash, 2400);
+  });
 }

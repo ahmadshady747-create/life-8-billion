@@ -242,6 +242,15 @@ class LifeManagementState {
       cost: 2200,
       effect: 'علاقات +9 ومصروف شهري -75 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'first_aid',
+      name: 'تدريب إسعاف ووقاية',
+      description:
+          'دورة إسعاف ووقاية صحية منظمة: مهارة عملية تنفعك وتنفع من حولك، وعادات صحية أفضل.',
+      durationMonths: 6,
+      cost: 2600,
+      effect: 'مهارة +10 وصحة +6 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -510,6 +519,12 @@ class LifeManagementState {
             relationships = _clampScore(relationships + 9);
             projectLine =
                 'اكتمل مشروع ${project.name}: العلاقات +9 (الآن $relationships) ومصروف شهري -75 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'first_aid':
+            skill = _clampScore(skill + 10);
+            health = _clampScore(health + 6);
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +10 (الآن $skill) والصحة +6 (الآن $health).';
             break;
         }
       } else {
