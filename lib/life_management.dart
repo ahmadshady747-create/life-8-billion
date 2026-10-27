@@ -215,6 +215,15 @@ class LifeManagementState {
       cost: 4000,
       effect: 'مهارة +10 ودخل شهري إضافي +300 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'kitchen',
+      name: 'مطبخ صحي منزلي',
+      description:
+          'تجهيز مطبخ لطبخ صحي في البيت: أكل أفضل ومصروف طعام أقل معا.',
+      durationMonths: 5,
+      cost: 1800,
+      effect: 'صحة +8 ومصروف شهري -50 دائما من الشهر التالي للاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -321,7 +330,8 @@ class LifeManagementState {
       300 +
       (money['housing']! + money['food']! + money['leisure']!) * 8 -
       (completedProjectIds.contains('home') ? 200 : 0) -
-      (completedProjectIds.contains('garden') ? 100 : 0);
+      (completedProjectIds.contains('garden') ? 100 : 0) -
+      (completedProjectIds.contains('kitchen') ? 50 : 0);
 
   int get monthlySavingsDeposit => monthlyIncome * money['savings']! ~/ 100;
 
@@ -465,6 +475,11 @@ class LifeManagementState {
             extraMonthlyIncome += 300;
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +10 (الآن $skill) ودخل شهري إضافي دائم +300.';
+            break;
+          case 'kitchen':
+            health = _clampScore(health + 8);
+            projectLine =
+                'اكتمل مشروع ${project.name}: الصحة +8 (الآن $health) ومصروف شهري -50 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
             break;
         }
       } else {

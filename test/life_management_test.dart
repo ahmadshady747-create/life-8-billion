@@ -823,4 +823,71 @@ void main() {
     expect(restored.startProject('app'), isTrue);
     expect(restored.cash, 1000);
   });
+  test('بدء المطبخ الصحي يخصم ثمنه ويرفض مشروعا ثانيا وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('kitchen'), isTrue);
+    expect(s.cash, 3200);
+    expect(s.activeProjectId, 'kitchen');
+    expect(s.startProject('certificate'), isFalse);
+    expect(s.cash, 3200);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('kitchen'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال المطبخ بعد 5 أشهر يرفع الصحة 8 ويخفض المصروف 50 من الشهر التالي', () {
+    final s = LifeManagementState();
+    expect(s.startProject('kitchen'), isTrue);
+    MonthReport? fifth;
+    for (var i = 0; i < 5; i++) {
+      fifth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('kitchen'));
+    expect(fifth!.lines.any((l) => l.contains('مطبخ صحي منزلي')), isTrue);
+    expect(fifth.expenses, 860);
+    expect(s.health, 83);
+    expect(s.skill, 45);
+    expect(s.monthlyExpenses, 810);
+    expect(s.cash, 5734);
+    expect(s.months, 5);
+    final sixth = s.advanceMonth();
+    expect(sixth.expenses, 810);
+    expect(s.cash, 6312);
+    expect(s.months, 6);
+  });
+  test('المطبخ المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('kitchen'), isTrue);
+    for (var i = 0; i < 5; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('kitchen'), isFalse);
+  });
+  test('حفظ واسترجاع المطبخ النشط يكمله بعد 3 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('kitchen'), isTrue);
+    for (var i = 0; i < 2; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'kitchen');
+    expect(restored.activeProjectMonths, 2);
+    for (var i = 0; i < 3; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('kitchen'));
+    expect(restored.health, 83);
+    expect(restored.monthlyExpenses, 810);
+  });
+  test('توافق المطبخ مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('kitchen'), isTrue);
+    expect(restored.cash, 3200);
+  });
 }
