@@ -1333,4 +1333,70 @@ void main() {
     expect(restored.startProject('library'), isTrue);
     expect(restored.cash, 2400);
   });
+  test('بدء المخيم الصيفي وخصمه ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('summer_camp'), isTrue);
+    expect(s.cash, 1800);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 1800);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('summer_camp'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال المخيم الصيفي بعد 10 أشهر: مهارة وصحة وعلاقات +5', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('summer_camp'), isTrue);
+    MonthReport? tenth;
+    for (var i = 0; i < 10; i++) {
+      tenth = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('summer_camp'));
+    expect(tenth!.lines.any((l) => l.contains('مخيم صيفي')), isTrue);
+    expect(s.skill, control.skill + 5);
+    expect(s.health, control.health + 5);
+    expect(s.relationships, control.relationships + 5);
+    expect(s.cash, control.cash - 3200);
+  });
+  test('المخيم الصيفي المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('summer_camp'), isTrue);
+    for (var i = 0; i < 10; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('summer_camp'), isFalse);
+  });
+  test('حفظ واسترجاع المخيم الصيفي النشط يكمله بعد 6 أشهر أخرى', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('summer_camp'), isTrue);
+    for (var i = 0; i < 4; i++) {
+      s.advanceMonth();
+      control.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'summer_camp');
+    expect(restored.activeProjectMonths, 4);
+    for (var i = 0; i < 6; i++) {
+      restored.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('summer_camp'));
+    expect(restored.skill, control.skill + 5);
+    expect(restored.health, control.health + 5);
+    expect(restored.relationships, control.relationships + 5);
+  });
+  test('توافق المخيم الصيفي مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('summer_camp'), isTrue);
+    expect(restored.cash, 1800);
+  });
 }

@@ -288,6 +288,15 @@ class LifeManagementState {
       effect:
           'مهارة +5 وعلاقات +5 ومصروف شهري -40 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'summer_camp',
+      name: 'مخيم صيفي للأطفال',
+      description:
+          'تنظيم مخيم صيفي لأطفال الحي: أنشطة بدنية وألعاب جماعية وتعلم عملي، فتتحرك وتتعرف وتتعلم معا.',
+      durationMonths: 10,
+      cost: 3200,
+      effect: 'مهارة +5 وصحة +5 وعلاقات +5 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -587,6 +596,13 @@ class LifeManagementState {
             relationships = _clampScore(relationships + 5);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +5 (الآن $skill) والعلاقات +5 (الآن $relationships) ومصروف شهري -40 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'summer_camp':
+            skill = _clampScore(skill + 5);
+            health = _clampScore(health + 5);
+            relationships = _clampScore(relationships + 5);
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +5 (الآن $skill) والصحة +5 (الآن $health) والعلاقات +5 (الآن $relationships).';
             break;
         }
       } else {
