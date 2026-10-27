@@ -315,6 +315,15 @@ class LifeManagementState {
       cost: 2800,
       effect: 'مهارة +4 وعلاقات +4 ودخل شهري إضافي +100 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'green_cleanup',
+      name: 'حملة نظافة وتشجير الحيّ',
+      description:
+          'تنظيف الحيّ وزراعة شتلات مع الجيران بانتظام: تتحرك في الهواء الطلق، وتتعرف أكثر، وتقل حاجتك لشراء نباتات وزينة للبيت معا.',
+      durationMonths: 8,
+      cost: 2400,
+      effect: 'صحة +4 وعلاقات +4 ومصروف شهري -30 دائما من الشهر التالي للاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -425,7 +434,8 @@ class LifeManagementState {
       (completedProjectIds.contains('kitchen') ? 50 : 0) -
       (completedProjectIds.contains('coop') ? 75 : 0) -
       (completedProjectIds.contains('repair') ? 60 : 0) -
-      (completedProjectIds.contains('library') ? 40 : 0);
+      (completedProjectIds.contains('library') ? 40 : 0) -
+      (completedProjectIds.contains('green_cleanup') ? 30 : 0);
 
   int get monthlySavingsDeposit => monthlyIncome * money['savings']! ~/ 100;
 
@@ -635,6 +645,12 @@ class LifeManagementState {
             extraMonthlyIncome += 100;
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +4 (الآن $skill) والعلاقات +4 (الآن $relationships) ودخل شهري إضافي دائم +100.';
+            break;
+          case 'green_cleanup':
+            health = _clampScore(health + 4);
+            relationships = _clampScore(relationships + 4);
+            projectLine =
+                'اكتمل مشروع ${project.name}: الصحة +4 (الآن $health) والعلاقات +4 (الآن $relationships) ومصروف شهري -30 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
             break;
         }
       } else {

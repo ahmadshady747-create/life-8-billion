@@ -1535,4 +1535,74 @@ void main() {
     expect(restored.startProject('vocational_coaching'), isTrue);
     expect(restored.cash, 2200);
   });
+  test('بدء حملة نظافة وتشجير الحيّ وخصمها ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('green_cleanup'), isTrue);
+    expect(s.cash, 2600);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2600);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('green_cleanup'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال حملة نظافة وتشجير الحيّ بعد 8 أشهر: صحة وعلاقات +4 ومصروف -30 من الشهر التالي', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('green_cleanup'), isTrue);
+    MonthReport? eighth;
+    for (var i = 0; i < 8; i++) {
+      eighth = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('green_cleanup'));
+    expect(eighth!.lines.any((l) => l.contains('حملة نظافة')),
+        isTrue);
+    expect(s.health, control.health + 4);
+    expect(s.relationships, control.relationships + 4);
+    expect(s.skill, control.skill);
+    expect(s.cash, control.cash - 2400);
+    s.advanceMonth();
+    control.advanceMonth();
+    expect(s.cash, control.cash - 2400 + 30);
+    expect(s.months, 9);
+  });
+  test('حملة نظافة وتشجير الحيّ المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('green_cleanup'), isTrue);
+    for (var i = 0; i < 8; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('green_cleanup'), isFalse);
+  });
+  test('حفظ واسترجاع حملة نظافة وتشجير الحيّ النشطة يكملها بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('green_cleanup'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+      control.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'green_cleanup');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('green_cleanup'));
+    expect(restored.health, control.health + 4);
+    expect(restored.relationships, control.relationships + 4);
+  });
+  test('توافق حملة نظافة وتشجير الحيّ مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('green_cleanup'), isTrue);
+    expect(restored.cash, 2600);
+  });
 }
