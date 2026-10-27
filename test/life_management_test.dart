@@ -1138,4 +1138,69 @@ void main() {
     expect(restored.startProject('delivery'), isTrue);
     expect(restored.cash, 2200);
   });
+  test('بدء ورشة إصلاح وخصمها ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('repair'), isTrue);
+    expect(s.cash, 2600);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2600);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('repair'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال ورشة الإصلاح بعد 7 أشهر يرفع المهارة 8 ويخفض المصروف 60', () {
+    final s = LifeManagementState();
+    expect(s.startProject('repair'), isTrue);
+    MonthReport? seventh;
+    for (var i = 0; i < 7; i++) {
+      seventh = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('repair'));
+    expect(seventh!.lines.any((l) => l.contains('ورشة إصلاح منزلية')), isTrue);
+    expect(s.skill, 59);
+    expect(s.health, 75);
+    expect(s.relationships, 50);
+    expect(s.cash, 6198);
+    expect(s.months, 7);
+    expect(s.monthlyExpenses, 800);
+    final next = s.advanceMonth();
+    expect(next.expenses, 800);
+    expect(s.cash, 6820);
+  });
+  test('ورشة الإصلاح المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('repair'), isTrue);
+    for (var i = 0; i < 7; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('repair'), isFalse);
+  });
+  test('حفظ واسترجاع ورشة الإصلاح النشطة يكملها بعد 4 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('repair'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'repair');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 4; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('repair'));
+    expect(restored.skill, 59);
+    expect(restored.monthlyExpenses, 800);
+  });
+  test('توافق ورشة الإصلاح مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('repair'), isTrue);
+    expect(restored.cash, 2600);
+  });
 }
