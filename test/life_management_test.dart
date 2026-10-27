@@ -1605,4 +1605,73 @@ void main() {
     expect(restored.startProject('green_cleanup'), isTrue);
     expect(restored.cash, 2600);
   });
+  test('بدء مشي وطبخ صحي جماعي وخصمه ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('walking_cooking'), isTrue);
+    expect(s.cash, 2300);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2300);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('walking_cooking'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال مشي وطبخ صحي جماعي بعد 7 أشهر: مهارة +5 وصحة +6 ومصروف -45', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('walking_cooking'), isTrue);
+    MonthReport? seventh;
+    for (var i = 0; i < 7; i++) {
+      seventh = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('walking_cooking'));
+    expect(seventh!.lines.any((l) => l.contains('مشي وطبخ صحي جماعي')),
+        isTrue);
+    expect(s.skill, control.skill + 5);
+    expect(s.health, control.health + 6);
+    expect(s.relationships, control.relationships);
+    expect(s.cash, control.cash - 2700);
+    expect(s.monthlyExpenses, control.monthlyExpenses - 45);
+    s.advanceMonth();
+    control.advanceMonth();
+    // الشهر التالي: مصروف -45، ودخل +15 من مهارة +5، وادخار +3،
+    // فصافي النقد أعلى من الضابطة بـ 45 + 15 - 3 = 57 فوق فرق 2700.
+    expect(s.cash, control.cash - 2700 + 57);
+  });
+  test('مشي وطبخ صحي جماعي المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('walking_cooking'), isTrue);
+    for (var i = 0; i < 7; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('walking_cooking'), isFalse);
+  });
+  test('حفظ واسترجاع مشي وطبخ صحي جماعي النشط يكمله بعد أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('walking_cooking'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'walking_cooking');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 4; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('walking_cooking'));
+    expect(restored.skill, 56);
+    expect(restored.health, 81);
+  });
+  test('توافق مشي وطبخ صحي جماعي مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('walking_cooking'), isTrue);
+    expect(restored.cash, 2300);
+  });
 }
