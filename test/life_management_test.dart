@@ -950,4 +950,69 @@ void main() {
     expect(restored.startProject('community'), isTrue);
     expect(restored.cash, 2000);
   });
+  test('بدء التعاونية يخصم 2200 ويرفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('coop'), isTrue);
+    expect(s.cash, 2800);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2800);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('coop'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال التعاونية بعد 8 أشهر يرفع العلاقات 9 ويخفض المصروف 75', () {
+    final s = LifeManagementState();
+    expect(s.startProject('coop'), isTrue);
+    MonthReport? eighth;
+    for (var i = 0; i < 8; i++) {
+      eighth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('coop'));
+    expect(eighth!.lines.any((l) => l.contains('تعاونية حيّ')), isTrue);
+    expect(eighth.expenses, 860);
+    expect(s.relationships, 59);
+    expect(s.skill, 54);
+    expect(s.cash, 6941);
+    expect(s.monthlyExpenses, 785);
+    expect(s.months, 8);
+    final ninth = s.advanceMonth();
+    expect(ninth.expenses, 785);
+    expect(s.cash, 7566);
+  });
+  test('التعاونية المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('coop'), isTrue);
+    for (var i = 0; i < 8; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('coop'), isFalse);
+  });
+  test('حفظ واسترجاع التعاونية النشطة يكملها بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('coop'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'coop');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('coop'));
+    expect(restored.relationships, 59);
+    expect(restored.monthlyExpenses, 785);
+  });
+  test('توافق التعاونية مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('coop'), isTrue);
+    expect(restored.cash, 2800);
+  });
 }

@@ -233,6 +233,15 @@ class LifeManagementState {
       cost: 3000,
       effect: 'مهارة +8 وعلاقات +8 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'coop',
+      name: 'تعاونية حيّ',
+      description:
+          'مجموعة شراء تعاونية مع الجيران: تشترون معا بأسعار أقل وتتعرفون أكثر.',
+      durationMonths: 8,
+      cost: 2200,
+      effect: 'علاقات +9 ومصروف شهري -75 دائما من الشهر التالي للاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -340,7 +349,8 @@ class LifeManagementState {
       (money['housing']! + money['food']! + money['leisure']!) * 8 -
       (completedProjectIds.contains('home') ? 200 : 0) -
       (completedProjectIds.contains('garden') ? 100 : 0) -
-      (completedProjectIds.contains('kitchen') ? 50 : 0);
+      (completedProjectIds.contains('kitchen') ? 50 : 0) -
+      (completedProjectIds.contains('coop') ? 75 : 0);
 
   int get monthlySavingsDeposit => monthlyIncome * money['savings']! ~/ 100;
 
@@ -495,6 +505,11 @@ class LifeManagementState {
             relationships = _clampScore(relationships + 8);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +8 (الآن $skill) والعلاقات +8 (الآن $relationships).';
+            break;
+          case 'coop':
+            relationships = _clampScore(relationships + 9);
+            projectLine =
+                'اكتمل مشروع ${project.name}: العلاقات +9 (الآن $relationships) ومصروف شهري -75 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
             break;
         }
       } else {
