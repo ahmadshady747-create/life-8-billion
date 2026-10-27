@@ -333,6 +333,15 @@ class LifeManagementState {
       cost: 2700,
       effect: 'مهارة +5 وصحة +6 ومصروف شهري -45 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'language_course',
+      name: 'دورة لغة أجنبية',
+      description:
+          'تعلّم لغة ثانية بانتظام: تفتح لك مصادر معرفة أوسع وفرص عمل أفضل، دون أثر مباشر على الصحة أو العلاقات.',
+      durationMonths: 8,
+      cost: 3400,
+      effect: 'مهارة +12 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -667,6 +676,11 @@ class LifeManagementState {
             health = _clampScore(health + 6);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +5 (الآن $skill) والصحة +6 (الآن $health) ومصروف شهري -45 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'language_course':
+            skill = _clampScore(skill + 12);
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +12 (الآن $skill).';
             break;
         }
       } else {

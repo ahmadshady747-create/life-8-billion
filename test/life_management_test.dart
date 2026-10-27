@@ -1674,4 +1674,62 @@ void main() {
     expect(restored.startProject('walking_cooking'), isTrue);
     expect(restored.cash, 2300);
   });
+  test('بدء دورة لغة أجنبية يخصم ثمنها ويرفض مشروعا ثانيا أو بلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('language_course'), isTrue);
+    expect(s.cash, 1600);
+    expect(s.activeProjectId, 'language_course');
+    expect(s.startProject('fitness'), isFalse);
+    expect(s.cash, 1600);
+    final poor = LifeManagementState(cash: 100);
+    expect(poor.startProject('language_course'), isFalse);
+    expect(poor.activeProjectId, isNull);
+  });
+  test('دورة اللغة تكتمل بعد 8 أشهر وترفع المهارة 12 دون غيرها ولا تتكرر', () {
+    final s = LifeManagementState();
+    expect(s.startProject('language_course'), isTrue);
+    for (var i = 0; i < 8; i++) {
+      s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('language_course'));
+    expect(s.startProject('language_course'), isFalse);
+    final control = LifeManagementState();
+    for (var i = 0; i < 8; i++) {
+      control.advanceMonth();
+    }
+    expect(s.skill, control.skill + 12);
+    expect(s.health, control.health);
+    expect(s.relationships, control.relationships);
+  });
+  test('حفظ واسترجاع دورة اللغة النشطة يكملها بعد أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('language_course'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'language_course');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('language_course'));
+    final control = LifeManagementState();
+    for (var i = 0; i < 8; i++) {
+      control.advanceMonth();
+    }
+    expect(restored.skill, control.skill + 12);
+  });
+  test('توافق دورة اللغة مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('language_course'), isTrue);
+    expect(restored.cash, 1600);
+  });
 }
