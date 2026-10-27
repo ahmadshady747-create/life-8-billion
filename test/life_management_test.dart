@@ -1732,4 +1732,68 @@ void main() {
     expect(restored.startProject('language_course'), isTrue);
     expect(restored.cash, 1600);
   });
+  test('بدء شهادة مدرب لياقة يخصم ثمنها ويرفض مشروعا ثانيا أو بلا نقد',
+      () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness_certificate'), isTrue);
+    expect(s.cash, 1400);
+    expect(s.activeProjectId, 'fitness_certificate');
+    expect(s.startProject('fitness'), isFalse);
+    expect(s.cash, 1400);
+    final poor = LifeManagementState(cash: 100);
+    expect(poor.startProject('fitness_certificate'), isFalse);
+    expect(poor.activeProjectId, isNull);
+  });
+  test('شهادة مدرب اللياقة تكتمل بعد 9 أشهر وترفع المهارة والصحة والدخل ولا تتكرر',
+      () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness_certificate'), isTrue);
+    for (var i = 0; i < 9; i++) {
+      s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('fitness_certificate'));
+    expect(s.startProject('fitness_certificate'), isFalse);
+    final control = LifeManagementState();
+    for (var i = 0; i < 9; i++) {
+      control.advanceMonth();
+    }
+    expect(s.skill, control.skill + 6);
+    expect(s.health, control.health + 6);
+    expect(s.extraMonthlyIncome, 150);
+    expect(s.relationships, control.relationships);
+  });
+  test('حفظ واسترجاع شهادة مدرب اللياقة النشطة يكملها بعد أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness_certificate'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'fitness_certificate');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 6; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('fitness_certificate'));
+    final control = LifeManagementState();
+    for (var i = 0; i < 9; i++) {
+      control.advanceMonth();
+    }
+    expect(restored.skill, control.skill + 6);
+    expect(restored.health, control.health + 6);
+    expect(restored.extraMonthlyIncome, 150);
+  });
+  test('توافق شهادة مدرب اللياقة مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم',
+      () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('fitness_certificate'), isTrue);
+    expect(restored.cash, 1400);
+  });
 }

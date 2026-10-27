@@ -342,6 +342,15 @@ class LifeManagementState {
       cost: 3400,
       effect: 'مهارة +12 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'fitness_certificate',
+      name: 'شهادة مدرب لياقة',
+      description:
+          'شهادة تدريب لياقة معتمدة: تتقن علم التدريب، وتحافظ على لياقتك، وتدرب آخرين بأجر معا.',
+      durationMonths: 9,
+      cost: 3600,
+      effect: 'مهارة +6 وصحة +6 ودخل شهري إضافي +150 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -681,6 +690,13 @@ class LifeManagementState {
             skill = _clampScore(skill + 12);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +12 (الآن $skill).';
+            break;
+          case 'fitness_certificate':
+            skill = _clampScore(skill + 6);
+            health = _clampScore(health + 6);
+            extraMonthlyIncome += 150;
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +6 (الآن $skill) والصحة +6 (الآن $health) ودخل شهري إضافي دائم +150.';
             break;
         }
       } else {
