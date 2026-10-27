@@ -1265,4 +1265,72 @@ void main() {
     expect(restored.startProject('repair'), isTrue);
     expect(restored.cash, 2600);
   });
+  test('بدء مكتبة الحيّ وخصمها ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('library'), isTrue);
+    expect(s.cash, 2400);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2400);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('library'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال مكتبة الحيّ بعد 9 أشهر: مهارة وعلاقات +5 ومصروف -40', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('library'), isTrue);
+    MonthReport? ninth;
+    for (var i = 0; i < 9; i++) {
+      ninth = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('library'));
+    expect(ninth!.lines.any((l) => l.contains('مكتبة حيّ')), isTrue);
+    expect(s.skill, control.skill + 5);
+    expect(s.relationships, control.relationships + 5);
+    expect(s.health, control.health);
+    expect(s.cash, control.cash - 2600);
+    expect(s.monthlyExpenses, control.monthlyExpenses - 40);
+    s.advanceMonth();
+    control.advanceMonth();
+    // الشهر التالي: مصروف -40، ودخل +15 من مهارة +5، وادخار +3،
+    // فصافي النقد أعلى من الضابطة بـ 40 + 15 - 3 = 52 فوق فرق 2600.
+    expect(s.cash, control.cash - 2600 + 52);
+  });
+  test('مكتبة الحيّ المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('library'), isTrue);
+    for (var i = 0; i < 9; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('library'), isFalse);
+  });
+  test('حفظ واسترجاع مكتبة الحيّ النشطة يكملها بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('library'), isTrue);
+    for (var i = 0; i < 4; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'library');
+    expect(restored.activeProjectMonths, 4);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('library'));
+    expect(restored.skill, 62);
+    expect(restored.relationships, 55);
+  });
+  test('توافق مكتبة الحيّ مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('library'), isTrue);
+    expect(restored.cash, 2400);
+  });
 }
