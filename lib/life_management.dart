@@ -306,6 +306,15 @@ class LifeManagementState {
       cost: 3000,
       effect: 'صحة +5 وعلاقات +5 ودخل شهري إضافي +120 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'vocational_coaching',
+      name: 'تدريب مهني للجيران',
+      description:
+          'تدريب جيرانك على مهارة عملية من خبرتك: تتقنها أكثر، وتتعرف أكثر، وتكسب دخلا صغيرا من رسوم التدريب معا.',
+      durationMonths: 8,
+      cost: 2800,
+      effect: 'مهارة +4 وعلاقات +4 ودخل شهري إضافي +100 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -619,6 +628,13 @@ class LifeManagementState {
             extraMonthlyIncome += 120;
             projectLine =
                 'اكتمل مشروع ${project.name}: الصحة +5 (الآن $health) والعلاقات +5 (الآن $relationships) ودخل شهري إضافي دائم +120.';
+            break;
+          case 'vocational_coaching':
+            skill = _clampScore(skill + 4);
+            relationships = _clampScore(relationships + 4);
+            extraMonthlyIncome += 100;
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +4 (الآن $skill) والعلاقات +4 (الآن $relationships) ودخل شهري إضافي دائم +100.';
             break;
         }
       } else {

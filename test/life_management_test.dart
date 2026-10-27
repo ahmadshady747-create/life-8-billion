@@ -1466,4 +1466,73 @@ void main() {
     expect(restored.startProject('healthy_cooking'), isTrue);
     expect(restored.cash, 2000);
   });
+  test('بدء التدريب المهني وخصمه ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('vocational_coaching'), isTrue);
+    expect(s.cash, 2200);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2200);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('vocational_coaching'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال التدريب المهني بعد 8 أشهر: مهارة وعلاقات +4 ودخل +100', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('vocational_coaching'), isTrue);
+    MonthReport? eighth;
+    for (var i = 0; i < 8; i++) {
+      eighth = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('vocational_coaching'));
+    expect(eighth!.lines.any((l) => l.contains('تدريب مهني للجيران')),
+        isTrue);
+    expect(s.skill, control.skill + 4);
+    expect(s.relationships, control.relationships + 4);
+    expect(s.health, control.health);
+    expect(s.extraMonthlyIncome, 100);
+    expect(s.cash, control.cash - 2800);
+    expect(s.months, 8);
+  });
+  test('التدريب المهني المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('vocational_coaching'), isTrue);
+    for (var i = 0; i < 8; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('vocational_coaching'), isFalse);
+  });
+  test('حفظ واسترجاع التدريب المهني النشط يكمله بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('vocational_coaching'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+      control.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'vocational_coaching');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('vocational_coaching'));
+    expect(restored.skill, control.skill + 4);
+    expect(restored.relationships, control.relationships + 4);
+    expect(restored.extraMonthlyIncome, 100);
+  });
+  test('توافق التدريب المهني مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('vocational_coaching'), isTrue);
+    expect(restored.cash, 2200);
+  });
 }
