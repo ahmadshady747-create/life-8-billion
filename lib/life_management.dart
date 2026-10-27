@@ -269,6 +269,15 @@ class LifeManagementState {
       cost: 2400,
       effect: 'مهارة +8 ومصروف شهري -60 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'fitness_coach',
+      name: 'تدريب لياقة للجيران',
+      description:
+          'تدريب جيرانك على اللياقة بانتظام: تحافظ على لياقتك وتكسب دخلا إضافيا معا.',
+      durationMonths: 6,
+      cost: 2000,
+      effect: 'صحة +6 ودخل شهري إضافي +150 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -555,6 +564,12 @@ class LifeManagementState {
             skill = _clampScore(skill + 8);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +8 (الآن $skill) ومصروف شهري -60 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'fitness_coach':
+            health = _clampScore(health + 6);
+            extraMonthlyIncome += 150;
+            projectLine =
+                'اكتمل مشروع ${project.name}: الصحة +6 (الآن $health) ودخل شهري إضافي دائم +150.';
             break;
         }
       } else {

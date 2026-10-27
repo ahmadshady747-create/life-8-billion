@@ -1192,6 +1192,68 @@ void main() {
     expect(restored.skill, 59);
     expect(restored.monthlyExpenses, 800);
   });
+  test('بدء تدريب لياقة للجيران وخصمه ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness_coach'), isTrue);
+    expect(s.cash, 3000);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 3000);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('fitness_coach'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال تدريب اللياقة بعد 6 أشهر يرفع الصحة 6 ويضيف دخلا 150', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('fitness_coach'), isTrue);
+    MonthReport? sixth;
+    for (var i = 0; i < 6; i++) {
+      sixth = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('fitness_coach'));
+    expect(sixth!.lines.any((l) => l.contains('تدريب لياقة للجيران')), isTrue);
+    expect(s.health, control.health + 6);
+    expect(s.skill, control.skill);
+    expect(s.relationships, control.relationships);
+    expect(s.extraMonthlyIncome, 150);
+    expect(s.cash, control.cash - 2000);
+  });
+  test('تدريب اللياقة المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness_coach'), isTrue);
+    for (var i = 0; i < 6; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('fitness_coach'), isFalse);
+  });
+  test('حفظ واسترجاع تدريب اللياقة النشط يكمله بعد 3 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('fitness_coach'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'fitness_coach');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 3; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('fitness_coach'));
+    expect(restored.extraMonthlyIncome, 150);
+  });
+  test('توافق تدريب اللياقة مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('fitness_coach'), isTrue);
+    expect(restored.cash, 3000);
+  });
   test('توافق ورشة الإصلاح مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
     final old = <String, dynamic>{
       'cash': 5000,
