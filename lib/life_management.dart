@@ -297,6 +297,15 @@ class LifeManagementState {
       cost: 3200,
       effect: 'مهارة +5 وصحة +5 وعلاقات +5 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'healthy_cooking',
+      name: 'دورة طبخ صحي للجيران',
+      description:
+          'تعليم جيرانك الطبخ الصحي أسبوعيا: تأكل أفضل، وتتعرف أكثر، وتكسب دخلا صغيرا من رسوم الدورة معا.',
+      durationMonths: 9,
+      cost: 3000,
+      effect: 'صحة +5 وعلاقات +5 ودخل شهري إضافي +120 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -603,6 +612,13 @@ class LifeManagementState {
             relationships = _clampScore(relationships + 5);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +5 (الآن $skill) والصحة +5 (الآن $health) والعلاقات +5 (الآن $relationships).';
+            break;
+          case 'healthy_cooking':
+            health = _clampScore(health + 5);
+            relationships = _clampScore(relationships + 5);
+            extraMonthlyIncome += 120;
+            projectLine =
+                'اكتمل مشروع ${project.name}: الصحة +5 (الآن $health) والعلاقات +5 (الآن $relationships) ودخل شهري إضافي دائم +120.';
             break;
         }
       } else {

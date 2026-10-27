@@ -1399,4 +1399,71 @@ void main() {
     expect(restored.startProject('summer_camp'), isTrue);
     expect(restored.cash, 1800);
   });
+  test('بدء دورة طبخ صحي يخصم ثمنها ويرفض مشروعا ثانيا أو بلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('healthy_cooking'), isTrue);
+    expect(s.cash, 2000);
+    expect(s.activeProjectId, 'healthy_cooking');
+    expect(s.startProject('summer_camp'), isFalse);
+    expect(s.cash, 2000);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('healthy_cooking'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال دورة الطبخ الصحي بعد 9 أشهر: صحة وعلاقات +5 ودخل +120', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('healthy_cooking'), isTrue);
+    MonthReport? ninth;
+    for (var i = 0; i < 9; i++) {
+      ninth = s.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('healthy_cooking'));
+    expect(ninth!.lines.any((l) => l.contains('طبخ صحي')), isTrue);
+    expect(s.health, control.health + 5);
+    expect(s.relationships, control.relationships + 5);
+    expect(s.extraMonthlyIncome, 120);
+    expect(s.cash, control.cash - 3000);
+  });
+  test('دورة الطبخ الصحي المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('healthy_cooking'), isTrue);
+    for (var i = 0; i < 9; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('healthy_cooking'), isFalse);
+  });
+  test('حفظ واسترجاع دورة الطبخ الصحي النشطة يكملها بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    final control = LifeManagementState();
+    expect(s.startProject('healthy_cooking'), isTrue);
+    for (var i = 0; i < 4; i++) {
+      s.advanceMonth();
+      control.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'healthy_cooking');
+    expect(restored.activeProjectMonths, 4);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+      control.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('healthy_cooking'));
+    expect(restored.health, control.health + 5);
+    expect(restored.relationships, control.relationships + 5);
+    expect(restored.extraMonthlyIncome, 120);
+  });
+  test('توافق دورة الطبخ الصحي مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('healthy_cooking'), isTrue);
+    expect(restored.cash, 2000);
+  });
 }
