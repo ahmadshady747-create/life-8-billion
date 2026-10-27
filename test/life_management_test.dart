@@ -762,4 +762,65 @@ void main() {
     expect(restored.startProject('club'), isTrue);
     expect(restored.cash, 2500);
   });
+  test('بدء التطبيق الصغير يخصم ثمنه ويرفض مشروعا ثانيا وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('app'), isTrue);
+    expect(s.cash, 1000);
+    expect(s.activeProjectId, 'app');
+    expect(s.startProject('certificate'), isFalse);
+    expect(s.cash, 1000);
+    final poor = LifeManagementState(cash: 3000);
+    expect(poor.startProject('app'), isFalse);
+    expect(poor.cash, 3000);
+  });
+  test('اكتمال التطبيق بعد 10 أشهر يرفع المهارة 10 ويضيف دخلا 300', () {
+    final s = LifeManagementState();
+    expect(s.startProject('app'), isTrue);
+    MonthReport? tenth;
+    for (var i = 0; i < 10; i++) {
+      tenth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('app'));
+    expect(tenth!.lines.any((l) => l.contains('تطبيق صغير')), isTrue);
+    expect(s.skill, 70);
+    expect(s.extraMonthlyIncome, 300);
+    expect(s.monthlyIncome, 2110);
+    expect(s.months, 10);
+  });
+  test('التطبيق المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('app'), isTrue);
+    for (var i = 0; i < 10; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('app'), isFalse);
+  });
+  test('حفظ واسترجاع التطبيق النشط يكمله بعد 6 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('app'), isTrue);
+    for (var i = 0; i < 4; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'app');
+    expect(restored.activeProjectMonths, 4);
+    for (var i = 0; i < 6; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('app'));
+    expect(restored.skill, 70);
+    expect(restored.extraMonthlyIncome, 300);
+  });
+  test('توافق التطبيق مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('app'), isTrue);
+    expect(restored.cash, 1000);
+  });
 }

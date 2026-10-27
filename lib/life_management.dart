@@ -206,6 +206,15 @@ class LifeManagementState {
       cost: 2500,
       effect: 'علاقات +10 وصحة +5 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'app',
+      name: 'تطبيق صغير',
+      description:
+          'تطبيق عملي صغير يبنيه اللاعب من مهارته، ثم يبيع اشتراكا بسيطا بعد إطلاقه.',
+      durationMonths: 10,
+      cost: 4000,
+      effect: 'مهارة +10 ودخل شهري إضافي +300 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -450,6 +459,12 @@ class LifeManagementState {
             health = _clampScore(health + 5);
             projectLine =
                 'اكتمل مشروع ${project.name}: العلاقات +10 (الآن $relationships) والصحة +5 (الآن $health).';
+            break;
+          case 'app':
+            skill = _clampScore(skill + 10);
+            extraMonthlyIncome += 300;
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +10 (الآن $skill) ودخل شهري إضافي دائم +300.';
             break;
         }
       } else {
