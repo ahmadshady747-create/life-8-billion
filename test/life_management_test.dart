@@ -1076,4 +1076,66 @@ void main() {
     expect(restored.startProject('first_aid'), isTrue);
     expect(restored.cash, 2400);
   });
+  test('بدء خدمة التوصيل وخصمها ورفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('delivery'), isTrue);
+    expect(s.cash, 2200);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2200);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('delivery'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال خدمة التوصيل بعد 8 أشهر يرفع العلاقات 7 ودخلا 200', () {
+    final s = LifeManagementState();
+    expect(s.startProject('delivery'), isTrue);
+    MonthReport? eighth;
+    for (var i = 0; i < 8; i++) {
+      eighth = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('delivery'));
+    expect(eighth!.lines.any((l) => l.contains('خدمة توصيل للحيّ')), isTrue);
+    expect(s.skill, 54);
+    expect(s.health, 75);
+    expect(s.relationships, 57);
+    expect(s.extraMonthlyIncome, 200);
+    expect(s.cash, 6341);
+    expect(s.months, 8);
+  });
+  test('خدمة التوصيل المكتملة لا يعاد بدؤها', () {
+    final s = LifeManagementState();
+    expect(s.startProject('delivery'), isTrue);
+    for (var i = 0; i < 8; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('delivery'), isFalse);
+  });
+  test('حفظ واسترجاع خدمة التوصيل النشطة يكملها بعد 5 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('delivery'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'delivery');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('delivery'));
+    expect(restored.relationships, 57);
+    expect(restored.extraMonthlyIncome, 200);
+  });
+  test('توافق خدمة التوصيل مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('delivery'), isTrue);
+    expect(restored.cash, 2200);
+  });
 }

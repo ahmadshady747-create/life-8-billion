@@ -251,6 +251,15 @@ class LifeManagementState {
       cost: 2600,
       effect: 'مهارة +10 وصحة +6 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'delivery',
+      name: 'خدمة توصيل للحيّ',
+      description:
+          'توصيل طلبات الجيران بانتظام: دخل إضافي شهري وعلاقات أقوى مع أهل الحيّ معا.',
+      durationMonths: 8,
+      cost: 2800,
+      effect: 'علاقات +7 ودخل شهري إضافي +200 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -525,6 +534,12 @@ class LifeManagementState {
             health = _clampScore(health + 6);
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +10 (الآن $skill) والصحة +6 (الآن $health).';
+            break;
+          case 'delivery':
+            relationships = _clampScore(relationships + 7);
+            extraMonthlyIncome += 200;
+            projectLine =
+                'اكتمل مشروع ${project.name}: العلاقات +7 (الآن $relationships) ودخل شهري إضافي دائم +200.';
             break;
         }
       } else {
