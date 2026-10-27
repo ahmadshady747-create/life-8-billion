@@ -224,6 +224,15 @@ class LifeManagementState {
       cost: 1800,
       effect: 'صحة +8 ومصروف شهري -50 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'community',
+      name: 'مجتمع مهني',
+      description:
+          'بناء مجتمع مهني صغير: تعلّم من خبرات الآخرين وتبادل فرص معهم معا.',
+      durationMonths: 7,
+      cost: 3000,
+      effect: 'مهارة +8 وعلاقات +8 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -480,6 +489,12 @@ class LifeManagementState {
             health = _clampScore(health + 8);
             projectLine =
                 'اكتمل مشروع ${project.name}: الصحة +8 (الآن $health) ومصروف شهري -50 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'community':
+            skill = _clampScore(skill + 8);
+            relationships = _clampScore(relationships + 8);
+            projectLine =
+                'اكتمل مشروع ${project.name}: المهارة +8 (الآن $skill) والعلاقات +8 (الآن $relationships).';
             break;
         }
       } else {

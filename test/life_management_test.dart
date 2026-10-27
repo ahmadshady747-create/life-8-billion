@@ -890,4 +890,64 @@ void main() {
     expect(restored.startProject('kitchen'), isTrue);
     expect(restored.cash, 3200);
   });
+  test('بدء المجتمع المهني يخصم 3000 ويرفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('community'), isTrue);
+    expect(s.cash, 2000);
+    expect(s.startProject('app'), isFalse);
+    expect(s.cash, 2000);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('community'), isFalse);
+    expect(poor.cash, 1000);
+  });
+  test('اكتمال المجتمع المهني بعد 7 أشهر يرفع المهارة 8 والعلاقات 8', () {
+    final s = LifeManagementState();
+    expect(s.startProject('community'), isTrue);
+    MonthReport? seventh;
+    for (var i = 0; i < 7; i++) {
+      seventh = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('community'));
+    expect(seventh!.lines.any((l) => l.contains('مجتمع مهني')), isTrue);
+    expect(s.skill, 59);
+    expect(s.relationships, 58);
+    expect(s.cash, 5598);
+    expect(s.months, 7);
+  });
+  test('المجتمع المهني المكتمل لا يعاد بدؤه', () {
+    final s = LifeManagementState();
+    expect(s.startProject('community'), isTrue);
+    for (var i = 0; i < 7; i++) {
+      s.advanceMonth();
+    }
+    expect(s.startProject('community'), isFalse);
+  });
+  test('حفظ واسترجاع المجتمع المهني النشط يكمله بعد 4 أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('community'), isTrue);
+    for (var i = 0; i < 3; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'community');
+    expect(restored.activeProjectMonths, 3);
+    for (var i = 0; i < 4; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('community'));
+    expect(restored.skill, 59);
+    expect(restored.relationships, 58);
+  });
+  test('توافق المجتمع المهني مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('community'), isTrue);
+    expect(restored.cash, 2000);
+  });
 }
