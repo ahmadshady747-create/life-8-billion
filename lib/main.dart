@@ -1,70 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'game_engine.dart';
-import 'save_service.dart';
-import 'screens/death_screen.dart';
-import 'screens/game_screen.dart';
 import 'screens/life_management_screen.dart';
-import 'screens/start_screen.dart';
 
 void main() {
   runApp(const LifeApp());
 }
 
-enum _Screen { start, game, death }
-
 /// التطبيق كله عربي وباتجاه يمين إلى يسار، بتصميم Material 3 هادئ.
 /// الحفظ محلي فقط عبر shared_preferences، ولا يحتاج إنترنت.
-class LifeApp extends StatefulWidget {
+/// المرحلة 1 من هدف الإنهاء: لوحة إدارة الحياة هي الشاشة الرئيسية مباشرة.
+/// محرك الخيارات القديم لم يعد في مسار اللعب الرئيسي: ملفاته ما زالت
+/// في المستودع وفي تاريخ GitHub، لكن لا شاشة بداية ولا زر يوصله،
+/// ولا يُحمَّل حفظه عند فتح التطبيق. حفظ الإدارة (life_management_v1)
+/// هو الحفظ الوحيد الذي يُستأنف، وتستأنفه لوحة الإدارة نفسها عند فتحها.
+class LifeApp extends StatelessWidget {
   const LifeApp({super.key});
-
-  @override
-  State<LifeApp> createState() => _LifeAppState();
-}
-
-class _LifeAppState extends State<LifeApp> {
-  GameEngine _engine = GameEngine();
-  _Screen _screen = _Screen.start;
-  int _livesPlayed = 0;
-  GameEngine? _savedLife;
-  bool _loadingSaved = true;
-
-  @override
-  void initState() {
-    super.initState();
-    SaveService.load().then((saved) {
-      if (mounted) {
-        setState(() {
-          _savedLife = saved;
-          _loadingSaved = false;
-        });
-      }
-    });
-  }
-
-  void _startNewLife() {
-    setState(() {
-      _engine = GameEngine();
-      _engine.newLife();
-      _livesPlayed++;
-      _savedLife = null;
-      _screen = _Screen.game;
-    });
-    SaveService.save(_engine);
-  }
-
-  void _continueSaved() {
-    final saved = _savedLife;
-    if (saved == null) return;
-    setState(() {
-      _engine = saved;
-      _livesPlayed++;
-      _screen = _Screen.game;
-    });
-  }
-
-  Future<void> _onProgress() => SaveService.save(_engine);
 
   @override
   Widget build(BuildContext context) {
@@ -94,39 +45,7 @@ class _LifeAppState extends State<LifeApp> {
           ),
         ),
       ),
-      home: switch (_screen) {
-        _Screen.start => Builder(
-            builder: (ctx) => StartScreen(
-            onStart: _startNewLife,
-            onManagement: () {
-              Navigator.of(ctx).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const LifeManagementScreen(),
-                ),
-              );
-            },
-            onContinue: _loadingSaved ? null : (_savedLife == null ? null : _continueSaved),
-            savedName: _savedLife?.person.fullName,
-            savedAge: _savedLife?.age,
-            livesPlayed: _livesPlayed,
-          ),
-          ),
-        _Screen.game => GameScreen(
-            key: ValueKey(_livesPlayed),
-            engine: _engine,
-            onNewLife: _startNewLife,
-            onProgress: _onProgress,
-            onFinish: () {
-              SaveService.clear();
-              setState(() => _screen = _Screen.death);
-            },
-          ),
-        _Screen.death => DeathScreen(
-            engine: _engine,
-            onNewLife: _startNewLife,
-            onHome: () => setState(() => _screen = _Screen.start),
-          ),
-      },
+      home: const LifeManagementScreen(),
     );
   }
 }
