@@ -1953,4 +1953,82 @@ void main() {
     expect(restored.startProject('roof_garden'), isTrue);
     expect(restored.cash, 2900);
   });
+  test('بدء نادي القراءة يخصم ثمنه ويرفض مشروعا ثانيا أو بلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('reading_circle'), isTrue);
+    expect(s.cash, 5000 - 1800);
+    expect(s.activeProjectId, 'reading_circle');
+    expect(s.startProject('book'), isFalse);
+    expect(s.cash, 5000 - 1800);
+    final poor = LifeManagementState(cash: 100);
+    expect(poor.startProject('reading_circle'), isFalse);
+    expect(poor.cash, 100);
+    expect(poor.activeProjectId, isNull);
+  });
+  test('نادي القراءة يكتمل بعد 5 أشهر بعلاقات +8 ومهارة +3 ولا يتكرر',
+      () {
+    final s = LifeManagementState();
+    expect(s.startProject('reading_circle'), isTrue);
+    for (var i = 0; i < 5; i++) {
+      s.advanceMonth();
+    }
+    expect(s.activeProjectId, isNull);
+    expect(s.completedProjectIds, contains('reading_circle'));
+    expect(s.startProject('reading_circle'), isFalse);
+    final control = LifeManagementState();
+    for (var i = 0; i < 5; i++) {
+      control.advanceMonth();
+    }
+    expect(s.relationships, control.relationships + 8);
+    expect(s.skill, control.skill + 3);
+    expect(s.monthlyExpenses, control.monthlyExpenses);
+  });
+  test('نادي القراءة أضعف من الكتاب في العلاقات ومن المكتبة في المهارة',
+      () {
+    final s = LifeManagementState();
+    s.startProject('reading_circle');
+    for (var i = 0; i < 5; i++) {
+      s.advanceMonth();
+    }
+    final control = LifeManagementState();
+    for (var i = 0; i < 5; i++) {
+      control.advanceMonth();
+    }
+    expect(s.relationships, control.relationships + 8);
+    expect(s.relationships, lessThan(control.relationships + 15));
+    expect(s.skill, control.skill + 3);
+    expect(s.skill, lessThan(control.skill + 5));
+  });
+  test('حفظ واسترجاع نادي القراءة النشط يكمله بعد أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('reading_circle'), isTrue);
+    s.advanceMonth();
+    s.advanceMonth();
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'reading_circle');
+    expect(restored.activeProjectMonths, 2);
+    for (var i = 0; i < 3; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('reading_circle'));
+    final control = LifeManagementState();
+    for (var i = 0; i < 5; i++) {
+      control.advanceMonth();
+    }
+    expect(restored.relationships, control.relationships + 8);
+    expect(restored.skill, control.skill + 3);
+  });
+  test('توافق نادي القراءة مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم',
+      () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('reading_circle'), isTrue);
+    expect(restored.cash, 3200);
+  });
 }

@@ -369,6 +369,15 @@ class LifeManagementState {
       cost: 2100,
       effect: 'صحة +4 ومصروف شهري -65 دائما من الشهر التالي للاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'reading_circle',
+      name: 'نادي قراءة أسبوعي',
+      description:
+          'لقاء قراءة أسبوعي مع أصدقاء: تناقش كتابا كل شهر، فتتعلم وتبني علاقات معا، دون أثر على المصروف.',
+      durationMonths: 5,
+      cost: 1800,
+      effect: 'علاقات +8 ومهارة +3 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -727,6 +736,12 @@ class LifeManagementState {
             health = _clampScore(health + 4);
             projectLine =
                 'اكتمل مشروع ${project.name}: الصحة +4 (الآن $health) ومصروف شهري -65 دائما من الشهر التالي (المتوقع الآن $monthlyExpenses).';
+            break;
+          case 'reading_circle':
+            relationships = _clampScore(relationships + 8);
+            skill = _clampScore(skill + 3);
+            projectLine =
+                'اكتمل مشروع ${project.name}: العلاقات +8 (الآن $relationships) والمهارة +3 (الآن $skill).';
             break;
         }
       } else {
