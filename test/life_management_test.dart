@@ -1874,4 +1874,83 @@ void main() {
     expect(restored.startProject('group_meditation'), isTrue);
     expect(restored.cash, 3100);
   });
+  test('بدء حديقة السطح يخصم ثمنها ويرفض الثاني وبلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('roof_garden'), isTrue);
+    expect(s.cash, 5000 - 2100);
+    expect(s.activeProjectId, 'roof_garden');
+    expect(s.startProject('roof_garden'), isFalse);
+    expect(s.cash, 5000 - 2100);
+    final poor = LifeManagementState(cash: 1000);
+    expect(poor.startProject('roof_garden'), isFalse);
+    expect(poor.cash, 1000);
+    expect(poor.activeProjectId, isNull);
+  });
+  test('اكتمال حديقة السطح بعد 7 أشهر: صحة +4 ومصروف -65 من الشهر التالي', () {
+    final s = LifeManagementState();
+    expect(s.startProject('roof_garden'), isTrue);
+    MonthReport? seventh;
+    for (var i = 0; i < 7; i++) {
+      seventh = s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('roof_garden'));
+    expect(seventh!.lines.any((l) => l.contains('حديقة سطح')), isTrue);
+    final control = LifeManagementState();
+    for (var i = 0; i < 7; i++) {
+      control.advanceMonth();
+    }
+    expect(s.health, control.health + 4);
+    expect(s.monthlyExpenses, control.monthlyExpenses - 65);
+    expect(s.advanceMonth().expenses, 795);
+    expect(s.startProject('roof_garden'), isFalse);
+  });
+  test('حديقة السطح لا تهيمن على المطبخ الصحي ولا على الحديقة المنزلية', () {
+    final def = LifeManagementState.projectCatalog
+        .firstWhere((p) => p.id == 'roof_garden');
+    final kitchenDef = LifeManagementState.projectCatalog
+        .firstWhere((p) => p.id == 'kitchen');
+    final gardenDef = LifeManagementState.projectCatalog
+        .firstWhere((p) => p.id == 'garden');
+    expect(def.cost, greaterThan(kitchenDef.cost));
+    expect(def.durationMonths, greaterThan(kitchenDef.durationMonths));
+    expect(def.cost, greaterThan(gardenDef.cost));
+    expect(def.durationMonths, greaterThan(gardenDef.durationMonths));
+    final s = LifeManagementState();
+    s.startProject('roof_garden');
+    for (var i = 0; i < 7; i++) {
+      s.advanceMonth();
+    }
+    final control = LifeManagementState();
+    for (var i = 0; i < 7; i++) {
+      control.advanceMonth();
+    }
+    expect(s.health, lessThan(control.health + 8));
+    expect(s.monthlyExpenses, greaterThan(control.monthlyExpenses - 100));
+  });
+  test('حفظ واسترجاع حديقة السطح النشطة يكملها بعد أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('roof_garden'), isTrue);
+    s.advanceMonth();
+    s.advanceMonth();
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'roof_garden');
+    expect(restored.activeProjectMonths, 2);
+    for (var i = 0; i < 5; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('roof_garden'));
+    expect(restored.advanceMonth().expenses, 795);
+  });
+  test('توافق حديقة السطح مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('roof_garden'), isTrue);
+    expect(restored.cash, 2900);
+  });
 }
