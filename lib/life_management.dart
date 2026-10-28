@@ -351,6 +351,15 @@ class LifeManagementState {
       cost: 3600,
       effect: 'مهارة +6 وصحة +6 ودخل شهري إضافي +150 عند الاكتمال',
     ),
+    LifeProjectPlan(
+      id: 'group_meditation',
+      name: 'جلسات تأمل جماعية',
+      description:
+          'تأمل جماعي أسبوعي مع الجيران: تهدئة وعلاقات أقوى، دون مهارة أو دخل مباشر.',
+      durationMonths: 6,
+      cost: 1900,
+      effect: 'علاقات +6 وصحة +3 عند الاكتمال',
+    ),
   ];
 
   int ageYears;
@@ -697,6 +706,12 @@ class LifeManagementState {
             extraMonthlyIncome += 150;
             projectLine =
                 'اكتمل مشروع ${project.name}: المهارة +6 (الآن $skill) والصحة +6 (الآن $health) ودخل شهري إضافي دائم +150.';
+            break;
+          case 'group_meditation':
+            relationships = _clampScore(relationships + 6);
+            health = _clampScore(health + 3);
+            projectLine =
+                'اكتمل مشروع ${project.name}: العلاقات +6 (الآن $relationships) والصحة +3 (الآن $health).';
             break;
         }
       } else {

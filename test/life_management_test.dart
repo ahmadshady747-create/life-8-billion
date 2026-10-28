@@ -1796,4 +1796,82 @@ void main() {
     expect(restored.startProject('fitness_certificate'), isTrue);
     expect(restored.cash, 1400);
   });
+  test('بدء جلسات التأمل يخصم ثمنها ويرفض مشروعا ثانيا أو بلا نقد', () {
+    final s = LifeManagementState();
+    expect(s.startProject('group_meditation'), isTrue);
+    expect(s.cash, 3100);
+    expect(s.activeProjectId, 'group_meditation');
+    expect(s.startProject('fitness'), isFalse);
+    expect(s.cash, 3100);
+    final poor = LifeManagementState(cash: 100);
+    expect(poor.startProject('group_meditation'), isFalse);
+    expect(poor.activeProjectId, isNull);
+  });
+  test('جلسات التأمل تكتمل بعد 6 أشهر وترفع العلاقات والصحة ولا تتكرر', () {
+    final s = LifeManagementState();
+    expect(s.startProject('group_meditation'), isTrue);
+    for (var i = 0; i < 6; i++) {
+      s.advanceMonth();
+    }
+    expect(s.completedProjectIds, contains('group_meditation'));
+    expect(s.startProject('group_meditation'), isFalse);
+    final control = LifeManagementState();
+    for (var i = 0; i < 6; i++) {
+      control.advanceMonth();
+    }
+    expect(s.relationships, control.relationships + 6);
+    expect(s.health, control.health + 3);
+    expect(s.skill, control.skill);
+  });
+  test('جلسات التأمل أضعف من النادي المجتمعي في كلا الأثرين فلا تهيمن', () {
+    final def = LifeManagementState.projectCatalog
+        .firstWhere((p) => p.id == 'group_meditation');
+    final clubDef = LifeManagementState.projectCatalog
+        .firstWhere((p) => p.id == 'club');
+    expect(def.cost, lessThan(clubDef.cost));
+    expect(def.durationMonths, lessThan(clubDef.durationMonths));
+    final s = LifeManagementState();
+    s.startProject('group_meditation');
+    for (var i = 0; i < 6; i++) {
+      s.advanceMonth();
+    }
+    final control = LifeManagementState();
+    for (var i = 0; i < 6; i++) {
+      control.advanceMonth();
+    }
+    expect(s.relationships, lessThan(control.relationships + 10));
+    expect(s.health, lessThan(control.health + 5));
+  });
+  test('حفظ واسترجاع جلسات التأمل النشطة يكملها بعد أشهر أخرى', () {
+    final s = LifeManagementState();
+    expect(s.startProject('group_meditation'), isTrue);
+    for (var i = 0; i < 2; i++) {
+      s.advanceMonth();
+    }
+    final restored =
+        LifeManagementState.fromJson(Map<String, dynamic>.from(s.toJson()));
+    expect(restored.activeProjectId, 'group_meditation');
+    expect(restored.activeProjectMonths, 2);
+    for (var i = 0; i < 4; i++) {
+      restored.advanceMonth();
+    }
+    expect(restored.completedProjectIds, contains('group_meditation'));
+    final control = LifeManagementState();
+    for (var i = 0; i < 6; i++) {
+      control.advanceMonth();
+    }
+    expect(restored.relationships, control.relationships + 6);
+    expect(restored.health, control.health + 3);
+  });
+  test('توافق جلسات التأمل مع حالة قديمة بلا قائمة مشاريع مكتملة بلا خصم', () {
+    final old = <String, dynamic>{
+      'cash': 5000,
+      'health': 75,
+      'skill': 30,
+      'relationships': 50,
+    };
+    final restored = LifeManagementState.fromJson(old);
+    expect(restored.startProject('group_meditation'), isTrue);
+    expect(restored.cash, 3100);
+  });
 }
