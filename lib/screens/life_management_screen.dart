@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../game_feel.dart';
 import '../goals.dart';
 import '../live_scene.dart';
+import '../tutorial.dart';
 import '../life_management.dart';
 
 /// لوحة إدارة الحياة: أساس المحاكاة الإدارية، لا بطاقة حدث.
@@ -31,12 +32,15 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
   String? _saveStatus;
   bool _soundOn = true;
   int _streakMonths = 0;
+  int _tutorialStep = 0;
 
   void _advanceMonth() {
     setState(() {
       _lastReport = _state.advanceMonth();
       _streakMonths =
           (_state.cash < 0 || _state.health < 30) ? 0 : _streakMonths + 1;
+      _finishTutorialStep(
+          nextTutorialStep(_tutorialStep, TutorialEvent.advanced));
     });
     // كل شهر يتقدم يُحفظ تلقائيا، فلا تضيع الإدارة
     // إن أُغلقت اللعبة دون حفظ يدوي.
@@ -62,6 +66,25 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
     super.initState();
     _tabs = TabController(length: _tabLabels.length, vsync: this);
     _loadSaved();
+    _loadTutorialDone();
+  }
+
+  /// يقرأ علامة انتهاء التعليم المحفوظة؛ تعليم منتهٍ لا يعود.
+  Future<void> _loadTutorialDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('life_tutorial_done_v1') == true && mounted) {
+      setState(() => _tutorialStep = 3);
+    }
+  }
+
+  Future<void> _persistTutorialDone() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('life_tutorial_done_v1', true);
+  }
+
+  void _finishTutorialStep(int next) {
+    _tutorialStep = next;
+    if (next >= 3) _persistTutorialDone();
   }
 
   /// يستأنف الإدارة المحفوظة على الجهاز إن وُجدت. أي حفظ تالف
@@ -98,6 +121,89 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
   void dispose() {
     _tabs.dispose();
     super.dispose();
+  }
+
+  /// شريط التعليم التفاعلي: يظهر فوق المشهد الحي في تبويب
+  /// نظرة عامة حتى ينتهي، وزراه في الخطوة 2 ينفذان إجراءين
+  /// إداريين حقيقيين (تفعيل الرياضة أو بدء مشروع)، لا خيارين
+  /// سرديين، مع زر تخطٍ في كل خطوة فلا يعلق اللاعب أبدا.
+  Widget _tutorialBanner() {
+    if (_tutorialStep >= 3) return const SizedBox.shrink();
+    final s = _state;
+    final affordableProjects = LifeManagementState.projectCatalog
+        .where((p) =>
+            s.activeProjectId == null &&
+            !s.completedProjectIds.contains(p.id) &&
+            s.cash >= p.cost)
+        .toList();
+    return Card(
+      key: const Key('tutorial-banner'),
+      color: Colors.amber.shade50,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: Colors.amber, width: 2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(tutorialStepTitle(_tutorialStep),
+                style: const TextStyle(
+                    fontSize: 17, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(tutorialStepHint(_tutorialStep)),
+            if (_tutorialStep == 1) ...[
+              const SizedBox(height: 8),
+              if (!s.gym)
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      s.gym = true;
+                      _finishTutorialStep(nextTutorialStep(
+                          _tutorialStep, TutorialEvent.managementAction));
+                    });
+                  },
+                  child: const Text('فعّل الرياضة هذا الشهر'),
+                ),
+              if (affordableProjects.isNotEmpty)
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      s.startProject(affordableProjects.first.id);
+                      _finishTutorialStep(nextTutorialStep(
+                          _tutorialStep, TutorialEvent.managementAction));
+                    });
+                  },
+                  child: Text(
+                      'ابدأ مشروعا (${affordableProjects.first.name} — ${affordableProjects.first.cost})'),
+                ),
+              if (s.gym && affordableProjects.isEmpty)
+                const Text(
+                    'الرياضة مفعّلة ولا مشروع بمقدور نقدك الآن — اضغط «تخطي هذه الخطوة» ثم تقدم شهرا لتجمع دخلا.'),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _finishTutorialStep(nextTutorialStep(
+                        _tutorialStep, TutorialEvent.managementAction));
+                  });
+                },
+                child: const Text('تخطي هذه الخطوة'),
+              ),
+            ],
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _finishTutorialStep(nextTutorialStep(
+                      _tutorialStep, TutorialEvent.skipped));
+                });
+              },
+              child: const Text('تخطي التعليم'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _row(String label, String value) => Padding(
@@ -233,14 +339,23 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                       fraction: s.relationships / 100,
                     ),
                     const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: _advanceMonth,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                    Container(
+                      decoration: _tutorialStep == 0 || _tutorialStep == 2
+                          ? BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.amber, width: 3),
+                              borderRadius: BorderRadius.circular(12),
+                            )
+                          : null,
+                      child: FilledButton(
+                        onPressed: _advanceMonth,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        child: const Text('تقدم شهرا ⏭️'),
                       ),
-                      child: const Text('تقدم شهرا ⏭️'),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
@@ -278,6 +393,8 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                   const Text('نظرة عامة',
                       style: TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
+                  _tutorialBanner(),
+                  const SizedBox(height: 8),
                   LifeLiveScene(
                     health: s.health,
                     skill: s.skill,
