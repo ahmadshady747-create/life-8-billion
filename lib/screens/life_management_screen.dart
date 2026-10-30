@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game_feel.dart';
+import '../live_scene.dart';
 import '../life_management.dart';
 
 /// لوحة إدارة الحياة: أساس المحاكاة الإدارية، لا بطاقة حدث.
@@ -272,6 +273,16 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                   const Text('نظرة عامة',
                       style: TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
+                  LifeLiveScene(
+                    health: s.health,
+                    skill: s.skill,
+                    relationships: s.relationships,
+                    cash: s.cash,
+                    savings: s.savings,
+                    ageYears: s.ageYears,
+                    months: s.months,
+                  ),
+                  const SizedBox(height: 8),
                   _row('الدخل الشهري المتوقع', '${s.monthlyIncome}'),
                   _row('المصروف الشهري المتوقع', '${s.monthlyExpenses}'),
                   if (s.cash < 0)
