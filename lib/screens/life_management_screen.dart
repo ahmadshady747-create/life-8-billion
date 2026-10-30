@@ -7,6 +7,7 @@ import '../game_feel.dart';
 import '../goals.dart';
 import '../live_scene.dart';
 import '../tutorial.dart';
+import '../world_events.dart';
 import '../life_management.dart';
 
 /// لوحة إدارة الحياة: أساس المحاكاة الإدارية، لا بطاقة حدث.
@@ -33,6 +34,8 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
   bool _soundOn = true;
   int _streakMonths = 0;
   int _tutorialStep = 0;
+  bool _eventSceneDismissed = false;
+  String? _eventNote;
 
   void _advanceMonth() {
     setState(() {
@@ -41,6 +44,8 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
           (_state.cash < 0 || _state.health < 30) ? 0 : _streakMonths + 1;
       _finishTutorialStep(
           nextTutorialStep(_tutorialStep, TutorialEvent.advanced));
+      _eventSceneDismissed = false;
+      _eventNote = null;
     });
     // كل شهر يتقدم يُحفظ تلقائيا، فلا تضيع الإدارة
     // إن أُغلقت اللعبة دون حفظ يدوي.
@@ -395,6 +400,49 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                           fontSize: 20, fontWeight: FontWeight.bold)),
                   _tutorialBanner(),
                   const SizedBox(height: 8),
+                  if (_lastReport != null && !_eventSceneDismissed)
+                    MonthEventScene(
+                      healthDelta: _lastReport!.healthDelta,
+                      skillDelta: _lastReport!.skillDelta,
+                      relationshipsDelta: _lastReport!.relationshipsDelta,
+                      cashDelta: _lastReport!.cashDelta,
+                      streakMonths: _streakMonths,
+                      gymOn: s.gym,
+                      socialOn: s.social,
+                      onFocusHealth: () {
+                        setState(() {
+                          s.gym = true;
+                          s.setRecovery(true);
+                          _eventSceneDismissed = true;
+                          _eventNote =
+                              'قررت: التركيز على الصحة — الرياضة والتعافي مفعّلان للشهر التالي.';
+                        });
+                      },
+                      onFocusRelationships: () {
+                        setState(() {
+                          s.social = true;
+                          _eventSceneDismissed = true;
+                          _eventNote =
+                              'قررت: التركيز على العلاقات — اللقاء الاجتماعي مفعّل للشهر التالي.';
+                        });
+                      },
+                      onKeepPlan: () {
+                        setState(() {
+                          _eventSceneDismissed = true;
+                          _eventNote =
+                              'قررت: واصل خطتك كما هي دون تغيير.';
+                        });
+                      },
+                    ),
+                  if (_lastReport != null && !_eventSceneDismissed)
+                    const SizedBox(height: 8),
+                  if (_eventNote != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(_eventNote!,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold)),
+                    ),
                   LifeLiveScene(
                     health: s.health,
                     skill: s.skill,
