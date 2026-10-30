@@ -1,7 +1,7 @@
 name: life_8_billion
 description: "لعبة قرارات قصصية: واحد من 8 مليارات إنسان، من الولادة حتى النهاية."
 publish_to: "none"
-version: 2.50.0+52
+version: 2.51.0+53
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

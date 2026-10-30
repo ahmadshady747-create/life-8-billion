@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game_feel.dart';
 import '../life_management.dart';
 
 /// لوحة إدارة الحياة: أساس المحاكاة الإدارية، لا بطاقة حدث.
@@ -26,6 +27,17 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
   LifeManagementState _state = LifeManagementState();
   MonthReport? _lastReport;
   String? _saveStatus;
+  bool _soundOn = true;
+
+  void _advanceMonth() {
+    setState(() {
+      _lastReport = _state.advanceMonth();
+    });
+    // كل شهر يتقدم يُحفظ تلقائيا، فلا تضيع الإدارة
+    // إن أُغلقت اللعبة دون حفظ يدوي.
+    _save();
+    GameFeel.playAction(soundOn: _soundOn);
+  }
   late final TabController _tabs;
 
   static const _tabLabels = [
@@ -140,6 +152,13 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('لوحة إدارة الحياة'),
+        actions: [
+          IconButton(
+            icon: Icon(_soundOn ? Icons.volume_up : Icons.volume_off),
+            tooltip: _soundOn ? 'كتم الصوت' : 'تشغيل الصوت',
+            onPressed: () => setState(() => _soundOn = !_soundOn),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
@@ -161,37 +180,55 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                         Text('العمر ${s.ageYears} — الشهر ${s.months}',
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('النقد: ${s.cash}',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        AnimatedCountText(
+                          prefix: 'النقد: ',
+                          value: s.cash,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('الادخار: ${s.savings}'),
-                        Text('الصحة: ${s.health} / 100'),
+                        AnimatedCountText(
+                          prefix: 'الادخار: ',
+                          value: s.savings,
+                        ),
+                        AnimatedCountText(
+                          prefix: 'الصحة: ',
+                          value: s.health,
+                          suffix: ' / 100',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('المهارة: ${s.skill} / 100'),
-                        Text('العلاقات: ${s.relationships} / 100'),
+                        AnimatedCountText(
+                          prefix: 'المهارة: ',
+                          value: s.skill,
+                          suffix: ' / 100',
+                        ),
+                        AnimatedCountText(
+                          prefix: 'العلاقات: ',
+                          value: s.relationships,
+                          suffix: ' / 100',
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    AnimatedBar(label: 'الصحة', fraction: s.health / 100),
+                    AnimatedBar(label: 'المهارة', fraction: s.skill / 100),
+                    AnimatedBar(
+                      label: 'العلاقات',
+                      fraction: s.relationships / 100,
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          _lastReport = s.advanceMonth();
-                        });
-                        // كل شهر يتقدم يُحفظ تلقائيا، فلا تضيع
-                        // الإدارة إن أُغلقت اللعبة دون حفظ يدوي.
-                        _save();
-                      },
+                      onPressed: _advanceMonth,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         textStyle: const TextStyle(
