@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game_feel.dart';
+import '../goals.dart';
 import '../live_scene.dart';
 import '../life_management.dart';
 
@@ -29,10 +30,13 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
   MonthReport? _lastReport;
   String? _saveStatus;
   bool _soundOn = true;
+  int _streakMonths = 0;
 
   void _advanceMonth() {
     setState(() {
       _lastReport = _state.advanceMonth();
+      _streakMonths =
+          (_state.cash < 0 || _state.health < 30) ? 0 : _streakMonths + 1;
     });
     // كل شهر يتقدم يُحفظ تلقائيا، فلا تضيع الإدارة
     // إن أُغلقت اللعبة دون حفظ يدوي.
@@ -49,6 +53,7 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
     'مهارة',
     'علاقات',
     'مشاريع',
+    'أهداف الحياة',
     'أهداف',
   ];
 
@@ -463,6 +468,21 @@ class _LifeManagementScreenState extends State<LifeManagementScreen>
                         ),
                       ),
                     ),
+                ]),
+                _panel([
+                  const Text('الأهداف والمكافآت',
+                      style: TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  GoalsPanel(
+                    months: s.months,
+                    health: s.health,
+                    skill: s.skill,
+                    relationships: s.relationships,
+                    cash: s.cash,
+                    savings: s.savings,
+                    completedProjectCount: s.completedProjectIds.length,
+                    streakMonths: _streakMonths,
+                  ),
                 ]),
                 _panel([
                   const Text('أهداف',
